@@ -124,15 +124,19 @@ public:
             throw _exception(_sFileName + ": was not read.");
         }
 
-        for (std::pair<const std::string, std::map<const std::string, std::string> > &section : congifMap)
+        // auto == std::pair<const std::string, std::map<const std::string, std::string> >
+        for (auto &section : congifMap)
         {
+            // auto == std::map<const std::string, std::map<const std::string, std::string> >::const_iterator
             auto itSectionTmp = _iniMap.find(section.first);
             if (itSectionTmp == _iniMap.end())
             {
                 throw _exception(_sFileName + ": section [" + section.first + "] not found.");
             }
-            for (std::pair<const std::string, std::string> &key : section.second)
+            // auto == std::pair<const std::string, std::string>
+            for (auto &key : section.second)
             {
+                // auto == std::map<const std::string, std::string>::const_iterator
                 auto itKeyTmp = itSectionTmp->second.find(key.first);
                 if (itKeyTmp == itSectionTmp->second.end())
                 {
@@ -161,6 +165,7 @@ public:
     */
     const std::map<const std::string, std::string>& GetSection(const std::string& sSectionName) const
     {
+        // auto == std::map<const std::string, std::map<const std::string, std::string> >::const_iterator
         auto itSectionTmp = _iniMap.find(sSectionName);
         if (itSectionTmp == _iniMap.end())
             return _emptySectionMap;
@@ -176,9 +181,11 @@ public:
     */
     const std::string& GetValue(const std::string& sSectionName, const std::string& sValueName, const std::string& sDefaultValue = "") const
     {
+        // auto == std::map<const std::string, std::map<const std::string, std::string> >::const_iterator
         auto itSectionTmp = _iniMap.find(sSectionName);
         if (itSectionTmp == _iniMap.end())
             return sDefaultValue;
+        // auto == std::map<const std::string, std::string>::const_iterator
         auto itKeyTmp = itSectionTmp->second.find(sValueName);
         if (itKeyTmp == itSectionTmp->second.end())
             return sDefaultValue;
@@ -211,6 +218,7 @@ public:
             return ;
 
         bool firstSection = true;
+        // auto == std::pair<const std::string, std::map<const std::string, std::string> >
         for (const auto &section : _iniMap)
         {
             if (firstSection == false)
@@ -221,6 +229,7 @@ public:
                 fs << "[] ; global section" << std::endl;
             else
                 fs << "[" << section.first << "]" << std::endl;
+            // auto == std::pair<const std::string, std::string>
             for (const auto &key : section.second)
             {
                 if (key.first.find_first_of(' ') != key.first.npos || key.first.find_first_of('#') != key.first.npos || key.first.find_first_of(';') != key.first.npos)
