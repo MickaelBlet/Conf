@@ -1,14 +1,15 @@
-#ifndef SIMPLE_INI_READER_HPP
-# define SIMPLE_INI_READER_HPP
+#ifndef _CONFIGATOR_HPP_
+# define _CONFIGATOR_HPP_
 
 #include <fstream>
 #include <iostream>
 #include <iomanip>
-#include <regex>
 #include <list>
 #include <map>
 
-class   SimpleIniReader
+#define CONFIGATOR_INSENSITIVE_COMPARE
+
+class Configator
 {
 
 private:
@@ -17,7 +18,7 @@ private:
     {
 
         public:
-            _exception(std::string const & str) throw() : _str(str) {}
+            _exception(std::string const &str) throw() : _str(str) {}
             virtual ~_exception() {}
             virtual const char *what() const throw() {return _str.c_str();}
         private:
@@ -26,112 +27,180 @@ private:
     };
 
 public:
-    /*
-    @func: Constructor
-    */
-    SimpleIniReader(void)
-    : _isRead(false)
+
+    #ifdef CONFIGATOR_INSENSITIVE_COMPARE
+        struct InsensitiveCompare
+        {
+            bool operator() (const std::string & s1, const std::string & s2) const
+            {
+                return std::lexicographical_compare(
+                    s1.begin (), s1.end (),   // source range
+                    s2.begin (), s2.end (),   // dest range
+                    [](const unsigned char&c1, const unsigned char&c2) // lambda compare
+                    {
+                        return std::tolower(c1) < std::tolower(c2);
+                    });  // comparison
+            }
+        };
+
+        typedef std::map<const std::string, std::string, InsensitiveCompare>    MapSection;
+        typedef std::map<const std::string, MapSection, InsensitiveCompare>     MapConfig;
+    #else
+        typedef std::map<const std::string, std::string>    MapSection;
+        typedef std::map<const std::string, MapSection>     MapConfig;
+    #endif
+
+    /**
+     * @brief Construct a new Configator object
+     * 
+     */
+    Configator(void):
+    _isRead(false)
     {
     }
 
-    /*
-    @func: Constructor
-    @param: sFileName
-    */
-    SimpleIniReader(const std::string& sFileName)
-    : _isRead(false)
+    /**
+     * @brief Construct a new Configator object
+     * 
+     * @param filename 
+     */
+    Configator(const std::string &filename):
+    _isRead(false)
     {
-        Read(sFileName);
+        readFile(filename);
     }
 
-    /*
-    @func: Copie Constructor
-    @param: sFileName
-    */
-    SimpleIniReader( SimpleIniReader& src)
+    Configator(const MapConfig &mapConfig):
+    _isRead(false)
     {
-        *this = src;
+        _mapConfig = mapConfig;
     }
 
-    SimpleIniReader& operator=(const SimpleIniReader& rhs)
-    {
-        if (this == &rhs)
-            return *this;
-        _sFileName = rhs._sFileName;
-        _isRead = rhs._isRead;
-        _iniMap = rhs._iniMap;
-        return *this;
-    }
+    /**
+     * @brief Construct a new Configator object
+     * 
+     * @param src 
+     */
+    Configator(Configator &src) = default;
 
-    /*
-    @func: Destructor
-    */
-    ~SimpleIniReader(void)
-    {
-    }
+    /**
+     * @brief 
+     * 
+     * @param rhs 
+     * @return Configator& 
+     */
+    Configator &operator=(const Configator &rhs) = default;
 
-    /*
-    @func:  Read
-    @param: sFileName
-    @brief: open sFileName and parse
-            insert data into map
-            close file
-    @return:read file complete
-    */
-    bool Read(const std::string& sFileName)
+    /**
+     * @brief Destroy the Configator object
+     * 
+     */
+    ~Configator(void) = default;
+
+    /**
+     * @brief 
+     * 
+     * @param filename 
+     * @return true 
+     * @return false 
+     */
+    bool readFile(const std::string& filename)
     {
         _isRead = false;
-        _iniMap.clear();
 
-        _sFileName = sFileName;
+        std::ifstream fileStream(filename.c_str());
 
-        _fileStream.open(sFileName.c_str());
+        if (fileStream.is_open() == false)
+            return false;
 
-        if (_fileStream.is_open())
-        {
-            ReadFile();
-            _fileStream.close();
-            _isRead = true;            
-        }
-        return _isRead;
+        _mapConfig.clear();
+        readStream(filename, fileStream);
+        _filename = filename;
+        fileStream.close();
+        _isRead = true;
+        return true;
     }
 
-    bool IsRead(void) const
+    /**
+     * @brief Get the Filename object
+     * 
+     * @return const std::string& 
+     */
+    const std::string& getFilename(void) const
+    {
+        return _filename;
+    }
+
+    /**
+     * @brief 
+     * 
+     * @return true 
+     * @return false 
+     */
+    bool isRead(void) const
     {
         return _isRead;
     }
 
-    /*
-    @func:  GetFileName
-    @return:current fileName
-    */
-    const std::string& GetFileName(void) const
+    void setConfig(const MapConfig &mapConfig)
     {
-        return _sFileName;
+        _mapConfig = mapConfig;
     }
 
-    /*
-    @func:  FillMap
-    @brief: set the congifMap from the current map
-    @except:file was not read
-            section not found
-            key not found
-    */
+    void setSection(const std::string &section, const MapSection &mapSection)
+    {
+        _mapConfig[section] = mapSection;
+    }
+
+    void setKey(const std::string &section, const std::string &key, const std::string &value = "")
+    {
+        _mapConfig[section][key] = value;
+    }
+
+    const MapConfig &getConfig(void) const
+    {
+        return _mapConfig;
+    }
+
+    const MapSection &getSection(const std::string &section) const
+    {
+        MapConfig::const_iterator itSectionTmp = _mapConfig.find(section);
+        if (itSectionTmp == _mapConfig.end())
+            return _emptyMapSection;
+        return itSectionTmp->second;
+    }
+
+    const std::string& getValue(const std::string& sectionName, const std::string& key, const std::string &defaultValue = "") const
+    {
+        MapConfig::const_iterator itSectionTmp = _mapConfig.find(sectionName);
+        if (itSectionTmp == _mapConfig.end())
+            return defaultValue;
+        MapSection::const_iterator itKeyTmp = itSectionTmp->second.find(key);
+        if (itKeyTmp == itSectionTmp->second.end())
+            return defaultValue;
+        return itKeyTmp->second;
+    }
+
+    /**
+     * @brief 
+     * 
+     * @param congifMap 
+     */
     void FillMap(std::map<const std::string, std::map<const std::string, std::string> >& congifMap) const
     {
         if (_isRead == false)
         {
-            throw _exception(_sFileName + ": was not read.");
+            throw _exception(_filename + ": was not read.");
         }
 
         // auto == std::pair<const std::string, std::map<const std::string, std::string> >
         for (auto &section : congifMap)
         {
             // auto == std::map<const std::string, std::map<const std::string, std::string> >::const_iterator
-            auto itSectionTmp = _iniMap.find(section.first);
-            if (itSectionTmp == _iniMap.end())
+            auto itSectionTmp = _mapConfig.find(section.first);
+            if (itSectionTmp == _mapConfig.end())
             {
-                throw _exception(_sFileName + ": section [" + section.first + "] not found.");
+                throw _exception(_filename + ": section [" + section.first + "] not found.");
             }
             // auto == std::pair<const std::string, std::string>
             for (auto &key : section.second)
@@ -140,69 +209,33 @@ public:
                 auto itKeyTmp = itSectionTmp->second.find(key.first);
                 if (itKeyTmp == itSectionTmp->second.end())
                 {
-                    throw _exception(_sFileName + ": section [" + section.first + "]: key \"" + key.first + "\" not found.");
+                    throw _exception(_filename + ": section [" + section.first + "]: key \"" + key.first + "\" not found.");
                 }
                 key.second = itKeyTmp->second;
             }
         }
     }
 
-    /*
-    @func:  GetMap
-    @return:map of class
-    */
-    const std::map<const std::string, std::map<const std::string, std::string> >& GetMap(void) const
+    void PrintConfig(void)
     {
-        return _iniMap;
-    }
-
-    /*
-    @func:  GetSection
-    @param: sSectionName
-    @brief: get const map of sSectionName
-    @return:const map of sSectionName
-            if not found sSectionName : emptySection
-    */
-    const std::map<const std::string, std::string>& GetSection(const std::string& sSectionName) const
-    {
-        // auto == std::map<const std::string, std::map<const std::string, std::string> >::const_iterator
-        auto itSectionTmp = _iniMap.find(sSectionName);
-        if (itSectionTmp == _iniMap.end())
-            return _emptySectionMap;
-        return itSectionTmp->second;
-    }
-
-    /*
-    @func:  GetValue
-    @param: sSectionName, sValueName, sDefaultValue = ""
-    @brief: get sValueName in sSectionName
-    @return:const string of sValueName
-            if not found sDefaultValue
-    */
-    const std::string& GetValue(const std::string& sSectionName, const std::string& sValueName, const std::string& sDefaultValue = "") const
-    {
-        // auto == std::map<const std::string, std::map<const std::string, std::string> >::const_iterator
-        auto itSectionTmp = _iniMap.find(sSectionName);
-        if (itSectionTmp == _iniMap.end())
-            return sDefaultValue;
-        // auto == std::map<const std::string, std::string>::const_iterator
-        auto itKeyTmp = itSectionTmp->second.find(sValueName);
-        if (itKeyTmp == itSectionTmp->second.end())
-            return sDefaultValue;
-        return itKeyTmp->second;
-    }
-
-    /*
-    @func:  SetValue
-    @param: sSectionName, sValueName, sNewValue
-    @brief: set sValueName in sSectionName
-            create section if not exist
-    @return:ref string of sNewValue
-    */
-    std::string& SetValue(const std::string& sSectionName, const std::string& sValueName, const std::string& sNewValue)
-    {
-        _iniMap[sSectionName][sValueName] = sNewValue;
-        return _iniMap[sSectionName][sValueName];
+        // auto == std::pair<const std::string, std::map<const std::string, std::string> >
+        for (const auto &section : _mapConfig)
+        {
+            std::cout << "[" << section.first << "]" << std::endl;
+            for (const auto &key : section.second)
+            {
+                if (key.first.find_first_of(' ') != key.first.npos || key.first.find_first_of('#') != key.first.npos || key.first.find_first_of(';') != key.first.npos)
+                    std::cout << "\"" << key.first << "\"";
+                else
+                    std::cout << key.first;
+                std::cout << "=";
+                if (key.second.find_first_of(' ') != key.second.npos || key.second.find_first_of('#') != key.second.npos || key.second.find_first_of(';') != key.second.npos || key.second.empty())
+                    std::cout << "\"" << key.second << "\"";
+                else
+                    std::cout << key.second;
+                std::cout << std::endl;                
+            }
+        }
     }
 
     /*
@@ -219,7 +252,7 @@ public:
 
         bool firstSection = true;
         // auto == std::pair<const std::string, std::map<const std::string, std::string> >
-        for (const auto &section : _iniMap)
+        for (const auto &section : _mapConfig)
         {
             if (firstSection == false)
                 fs << std::endl;
@@ -248,58 +281,188 @@ public:
     }
 
 private:
-    std::string                                                             _sFileName;
-    std::ifstream                                                           _fileStream;
-    bool                                                                    _isRead;
-    std::map<const std::string, std::map<const std::string, std::string> >  _iniMap;
-    std::map<const std::string, std::string>                                _emptySectionMap;
+
+    static const MapSection _emptyMapSection;
+
+    std::string _filename;
+    bool        _isRead;
+    MapConfig   _mapConfig;
+
+    bool parseKey(const std::string &line, const std::string &currentSectionName)
+    {
+        std::size_t startKey;
+        std::size_t endKey;
+        std::size_t startValue;
+        std::size_t endValue;
+        std::size_t i = 0;
+
+        while (isspace(line[i]))
+            i++;
+        if (line[i] == '=')
+            return false;
+        if (line[i] == '\"')
+        {
+            i++;
+            startKey = i;
+            while (line[i] != '\"')
+            {
+                if (line[i] == '\0')
+                    return false;
+                i++;
+            }
+            endKey = i;
+        }
+        else
+        {
+            startKey = i;
+            while (line[i] != '=')
+            {
+                if (line[i] == '\0')
+                    return false;
+                i++;
+            }
+            i--;
+            while (isspace(line[i]))
+                i--;
+            i++;
+            endKey = i;
+        }
+        while (isspace(line[i]))
+            i++;
+        while (line[i] != '=')
+        {
+            if (line[i] == '\0')
+                return false;
+            i++;
+        }
+        i++;
+        while (isspace(line[i]))
+            i++;
+        if (line[i] == '\"')
+        {
+            i++;
+            startValue = i;
+            while (line[i] != '\"')
+            {
+                if (line[i] == '\0')
+                    return false;
+                i++;
+            }
+            endValue = i;
+            i++;
+        }
+        else
+        {
+            startValue = i;
+            while (line[i] != ';' && line[i] != '#' && line[i] != '\0')
+                i++;
+            i--;
+            while (isspace(line[i]))
+                i--;
+            i++;
+            endValue = i;
+        }
+        while (isspace(line[i]))
+            i++;
+        if (line[i] == '\0' || line[i] == ';' || line[i] == '#')
+        {
+            _mapConfig[currentSectionName][line.substr(startKey, endKey - startKey)] = line.substr(startValue, endValue - startValue);
+            return true;
+        }
+        return false;
+    }
+
+    bool parseSection(const std::string &line, std::string *retSection)
+    {
+        std::size_t i = 0;
+        while (isspace(line[i]))
+            i++;
+        if (line[i] != '[')
+            return false;
+        i++;
+        while (isspace(line[i]))
+            i++;
+        std::size_t start = i;
+        while (line[i] != ']')
+        {
+            if (line[i] == '\0')
+                return false;
+            i++;
+        }
+        i--;
+        while (isspace(line[i]))
+            i--;
+        i++;
+        std::size_t end = i;
+        while (line[i] != ']')
+            i++;
+        i++;
+        while (isspace(line[i]))
+            i++;
+        if (line[i] == '\0' || line[i] == ';' || line[i] == '#')
+        {
+            *retSection = line.substr(start, end - start);
+            return true;
+        }
+        return false;
+    }
+
+    bool globalSection(const std::string &line)
+    {
+        std::size_t i = 0;
+        while (isspace(line[i]))
+            i++;
+        if (line[i] != '[')
+            return false;
+        i++;
+        if (line[i] != ']')
+            return false;
+        i++;
+        while (isspace(line[i]))
+            i++;
+        if (line[i] == '\0' || line[i] == ';' || line[i] == '#')
+            return true;
+        return false;
+    }
+
+    bool comment(const std::string &line)
+    {
+        std::size_t i = 0;
+        while (isspace(line[i]))
+            i++;
+        if (line[i] == ';' || line[i] == '#')
+            return true;
+        return false;
+    }
+
+    bool empty(const std::string &line)
+    {
+        for (const char &c : line)
+        {
+            if (!isspace(c))
+                return false;
+        }
+        return true;
+    }
 
     /*
     @func:  ReadFile
     @brief: parse and fill the map
     */
-    void ReadFile(void)
+    void readStream(const std::string &filename, std::istream &fileStream)
     {
-        std::string sLine;
-        std::string sCurrentSectionName = "";
-        const std::regex patternEmpty("^\\s*$");
-        const std::regex patternComment("^\\s*[#;]");
-        const std::regex patternGlobalSection("^\\s*\\[\\]\\s*(?:[#;].*)?$");
-        const std::regex patternSection("^\\s*\\[\\s*(.*\\S)\\s*\\]\\s*(?:[#;].*)?$");
-        const std::regex patternKey("^\\s*(?:\"(.+)\"|(.*[^\\s\"]))\\s*=\\s*(?:\"(.*)\"|([^#;]*\\S))\\s*(?:[#;].*)?$");
+        std::string currentSectionName = "";
 
-        while(std::getline(_fileStream, sLine))
+        std::string line;
+        while(std::getline(fileStream, line))
         {
-            std::smatch match;
-            // empty line
-            if (std::regex_search (sLine, match, patternEmpty))
-                continue;
-            // comment line
-            if (std::regex_search (sLine, match, patternComment))
-                continue;
-            // global section
-            if (std::regex_search (sLine, match, patternGlobalSection))
-            {
-                sCurrentSectionName = match[1].str();
-                continue;
-            }
-            // section
-            if (std::regex_search (sLine, match, patternSection))
-            {
-                sCurrentSectionName = match[1].str();
-                continue;
-            }
-            // key = value
-            if (std::regex_search (sLine, match, patternKey))
-            {
-                const std::string &sKey     = (match[1].str().empty()) ? match[2].str() : match[1].str();
-                const std::string &sValue   = (match[3].str().empty()) ? match[4].str() : match[3].str();
-                _iniMap[sCurrentSectionName][sKey] = sValue;
-                continue;
-            }
+            if (!empty(line)
+            &&  !comment(line)
+            &&  !parseSection(line, &currentSectionName))
+                parseKey(line, currentSectionName);
         }
     }
 
 };
 
-#endif
+#endif // _CONFIGATOR_HPP_
