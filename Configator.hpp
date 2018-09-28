@@ -19,43 +19,29 @@
 
 #define CONFIGATOR_INSENSITIVE_COMPARE
 
-// # include <string>
-// #  include <cxxabi.h>
-
-// template <typename T>
-// std::string TypeToString__()
-// {
-//     using TR = typename std::remove_reference<T>::type;
-//     #ifdef __GNUC__
-//         char *demangle = abi::__cxa_demangle(typeid(TR), nullptr, nullptr, nullptr);
-//         std::string retStr = demangle;
-//         if (demangle != nullptr)
-//             std::free(demangle);
-//         else
-//             retStr = typeid(TR);
-//     #else
-//         std::string retStr = typeid(TR);
-//     #endif
-//     if (std::is_const<TR>::value)
-//         retStr += " const";
-//     if (std::is_volatile<TR>::value)
-//         retStr += " volatile";
-//     if (std::is_lvalue_reference<T>::value)
-//         retStr += "&";
-//     else if (std::is_rvalue_reference<T>::value)
-//         retStr += "&&";
-//     return retStr;
-// }
-
-// # define TypeToString(_x) TypeToString__<decltype(_x)>()
-
 namespace Conf
 {
 
 class Configator
 {
 
-private:
+public:
+
+    struct Key
+    {
+        template<typename T, typename U>
+        Key(const std::string &key, T *retStr, const U &defaultValue):
+        key(key),
+        typeInfo(typeid(T))
+        {
+            *retStr = defaultValue;
+            retValue = retStr;
+        }
+
+        const std::string       &key;
+        const std::type_info    &typeInfo;
+        void                    *retValue;
+    };
 
     struct Value
     {
@@ -271,6 +257,22 @@ public:
     bool isRead(void) const
     {
         return _isRead;
+    }
+
+    void fillMap(std::map<const std::string, std::list<Key> > map)
+    {
+        for (auto &itemMap : map)
+        {
+            for (auto &itemList : itemMap.second)
+            {
+                if (itemList.typeInfo == typeid(int))
+                    std::cout << *(int*)itemList.retValue << std::endl;
+                if (itemList.typeInfo == typeid(std::string))
+                    std::cout << *(std::string*)itemList.retValue << std::endl;
+                if (itemList.typeInfo == typeid(bool))
+                    std::cout << *(bool*)itemList.retValue << std::endl;
+            }
+        }
     }
 
     void setConfig(const MapConfig &mapConfig)

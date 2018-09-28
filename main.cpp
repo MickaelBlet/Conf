@@ -3,11 +3,28 @@
 
 void test123(void);
 
+struct config
+{
+    std::string valueString;
+    bool valueBool;
+    int valueInt;
+    long valueLong;
+};
+
 int main(void)
 {
     using namespace Conf;
+
+    config c;
     // SimpleIniReader   configIni("./test.1.ini");
     Configator   configIni("./test.ini");
+    
+    configIni.fillMap({
+        {"", {
+            {"valueString", &c.valueString, "0"},
+            {"valueBool", &c.valueBool, true}
+        }}
+    });
 
     Configator  Config({
         {"", {
