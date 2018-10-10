@@ -27,104 +27,6 @@ class Configator
 
 public:
 
-    struct Key
-    {
-        template<typename T, typename U>
-        Key(const std::string &key, T *retStr, const U &defaultValue):
-        key(key),
-        typeInfo(typeid(T))
-        {
-            *retStr = defaultValue;
-            retValue = retStr;
-        }
-
-        const std::string       &key;
-        const std::type_info    &typeInfo;
-        void                    *retValue;
-    };
-
-    struct Value
-    {
-        Value():
-        typeString(std::string()),
-        isInt(false),
-        isLong(false),
-        isUnsignedLong(false),
-        isLongDouble(false),
-        typeInt(-1),
-        typeLong(-1),
-        typeUnsignedLong(-1),
-        typeDouble(-1),
-        typeLongDouble(-1)
-        {}
-
-        Value &operator=(const std::string &value)
-        {
-            this->typeString = value;
-            if (value.empty())
-                return *this;
-            bool             neg = false;
-            const char *strValue = value.c_str();
-            if (*strValue == '-')
-            {
-                neg = true;
-                ++strValue;
-            }
-            else if (*strValue == '+')
-            {
-                ++strValue;
-            }
-            if (value.size() > 2 && *strValue == '0' && *(strValue + 1) == 'x')
-            {
-                try { this->typeInt = std::stoi(strValue, nullptr, 16); isInt = true; } catch (std::exception &e) { isInt = false; }
-                try { this->typeLong = std::stol(strValue, nullptr, 16); isLong = true; } catch (std::exception &e) { isLong = false; }
-                try { this->typeUnsignedLong = std::stoul(strValue, nullptr, 16); isUnsignedLong = true; } catch (std::exception &e) { isUnsignedLong = false; }
-            }
-            else if (value.size() > 2 && *strValue == '0' && *(strValue + 1) == 'b')
-            {
-                try { this->typeInt = std::stoi(strValue + 2, nullptr, 2); isInt = true; } catch (std::exception &e) { isInt = false; }
-                try { this->typeLong = std::stol(strValue + 2, nullptr, 2); isLong = true; } catch (std::exception &e) { isLong = false; }
-                try { this->typeUnsignedLong = std::stoul(strValue + 2, nullptr, 2); isUnsignedLong = true; } catch (std::exception &e) { isUnsignedLong = false; }
-            }
-            else if (value.size() > 2 && *strValue == '0')
-            {
-                try { this->typeInt = std::stoi(strValue, nullptr, 8); isInt = true; } catch (std::exception &e) { isInt = false; }
-                try { this->typeLong = std::stol(strValue, nullptr, 8); isLong = true; } catch (std::exception &e) { isLong = false; }
-                try { this->typeUnsignedLong = std::stoul(strValue, nullptr, 8); isUnsignedLong = true; } catch (std::exception &e) { isUnsignedLong = false; }
-            }
-            else
-            {
-                try { this->typeInt = std::stoi(strValue); isInt = true; } catch (std::exception &e) { isInt = false; }
-                try { this->typeLong = std::stol(strValue); isLong = true; } catch (std::exception &e) { isLong = false; }
-                try { this->typeUnsignedLong = std::stoul(strValue); isUnsignedLong = true; } catch (std::exception &e) { isUnsignedLong = false; }
-            }
-
-            try { this->typeDouble = std::stod(strValue); isDouble = true; } catch (std::exception &e) { isDouble = false; }
-            try { this->typeLongDouble = std::stold(strValue); isLongDouble = true; } catch (std::exception &e) { isLongDouble = false; }
-
-            if (neg)
-            {
-                this->typeLong *= -1;
-                this->typeUnsignedLong *= -1;
-                this->typeDouble *= -1;
-            }
-        }
-
-        std::string     typeString;
-
-        bool            isInt;
-        bool            isLong;
-        bool            isUnsignedLong;
-        bool            isDouble;
-        bool            isLongDouble;
-
-        int             typeInt;
-        long            typeLong;
-        unsigned long   typeUnsignedLong;
-        double          typeDouble;
-        long double     typeLongDouble;
-    };
-
     class _exception : public std::exception
     {
 
@@ -154,11 +56,11 @@ public:
             }
         };
 
-        typedef std::map<const std::string, Value, InsensitiveCompare>      MapSection;
-        typedef std::map<const std::string, MapSection, InsensitiveCompare> MapConfig;
+        typedef std::map<std::string, std::string, InsensitiveCompare> MapSection;
+        typedef std::map<std::string, MapSection, InsensitiveCompare>  MapConfig;
     #else
-        typedef std::map<const std::string, Value>      MapSection;
-        typedef std::map<const std::string, MapSection> MapConfig;
+        typedef std::map<std::string, std::string> MapSection;
+        typedef std::map<std::string, MapSection>  MapConfig;
     #endif
 
     /**
@@ -181,7 +83,7 @@ public:
         readFile(filename);
     }
 
-    Configator(const std::map<const std::string, std::map<const std::string, std::string> > &mapConfig):
+    Configator(const std::map<std::string, std::map<std::string, std::string> > &mapConfig):
     _isRead(false)
     {
         for (const auto &item : mapConfig)
@@ -231,7 +133,7 @@ public:
             return false;
 
         _mapConfig.clear();
-        readStream(filename, fileStream);
+        readStream(fileStream);
         _filename = filename;
         fileStream.close();
         _isRead = true;
@@ -259,32 +161,22 @@ public:
         return _isRead;
     }
 
-    void fillMap(std::map<const std::string, std::list<Key> > map)
+    void setConfig(const std::map<const std::string, std::map<const std::string, std::string> > &mapConfig)
     {
-        for (auto &itemMap : map)
+        for (const std::pair<const std::string, std::map<const std::string, std::string> > &sectionMap : mapConfig)
         {
-            for (auto &itemList : itemMap.second)
+            for (const std::pair<const std::string, std::string> &keyMap : sectionMap.second)
             {
-                if (itemList.typeInfo == typeid(int))
-                    std::cout << *(int*)itemList.retValue << std::endl;
-                if (itemList.typeInfo == typeid(std::string))
-                    std::cout << *(std::string*)itemList.retValue << std::endl;
-                if (itemList.typeInfo == typeid(bool))
-                    std::cout << *(bool*)itemList.retValue << std::endl;
+                _mapConfig[sectionMap.first][keyMap.first] = keyMap.second;
             }
         }
     }
 
-    void setConfig(const MapConfig &mapConfig)
-    {
-        _mapConfig = mapConfig;
-    }
-
     void setSection(const std::string &section, const std::map<const std::string, std::string> &mapSection)
     {
-        for (const auto &subItem : mapSection)
+        for (const std::pair<const std::string, std::string> &keyMap : mapSection)
         {
-            _mapConfig[section][subItem.first] = subItem.second;
+            _mapConfig[section][keyMap.first] = keyMap.second;
         }
     }
 
@@ -296,157 +188,129 @@ public:
         _mapConfig[section][key] = ss.str();
     }
 
-    const MapConfig &getConfig(void) const
+    std::map<std::string, std::map<std::string, std::string> > getConfig(void) const
     {
-        return _mapConfig;
+        std::map<std::string, std::map<std::string, std::string> > ret;
+        for (const auto &sectionMap : _mapConfig)
+        {
+            for (const auto &keyMap : sectionMap.second)
+            {
+                ret[sectionMap.first][keyMap.first] = keyMap.second;
+            }
+        }
+        return ret;
     }
 
-    const MapSection &getSection(const std::string &section) const
+    std::map<std::string, std::string> getSection(const std::string &section) const
     {
+        std::map<std::string, std::string> ret;
         MapConfig::const_iterator itSectionTmp = _mapConfig.find(section);
         if (itSectionTmp == _mapConfig.end())
-            return _emptyMapSection;
-        return itSectionTmp->second;
+            return ret;
+        for (const auto &keyMap : itSectionTmp->second)
+        {
+            ret[keyMap.first] = keyMap.second;
+        }
+        return ret;
     }
 
-    const std::string& getValueString(const std::string& sectionName, const std::string& key, const std::string &defaultValue = "") const
+    template<typename T, typename U>
+    T &getValue(const char *sectionName, const char *key, T *retValue, const U &defaultValue) const
     {
+        *retValue = defaultValue;
         MapConfig::const_iterator itSectionTmp = _mapConfig.find(sectionName);
         if (itSectionTmp == _mapConfig.end())
-            return defaultValue;
+            return *retValue;
         MapSection::const_iterator itKeyTmp = itSectionTmp->second.find(key);
         if (itKeyTmp == itSectionTmp->second.end())
-            return defaultValue;
-        return itKeyTmp->second.typeString;
+            return *retValue;
+        std::stringstream stringStream;
+        const char *value = itKeyTmp->second.c_str();
+        int index = 0;
+        if (itKeyTmp->second == "true" || itKeyTmp->second == "on")
+        {
+            stringStream << true;
+            stringStream >> *retValue;
+            return *retValue;
+        }
+        else if (itKeyTmp->second == "false" || itKeyTmp->second == "off")
+        {
+            stringStream << false;
+            stringStream >> *retValue;
+            return *retValue;
+        }
+        if (value[index] == '-' || value[index] == '+')
+        {
+            index++;
+        }
+        if (value[index] == '0' && value[index + 1] == 'x')
+        {
+            long long int tmp;
+            stringStream << itKeyTmp->second;
+            stringStream >> std::setbase(16) >> tmp;
+            stringStream.str("");
+            stringStream.clear();
+            stringStream << std::setbase(10) << tmp;
+            stringStream >> *retValue;
+        }
+        else
+        {
+            stringStream << itKeyTmp->second;
+            stringStream >> *retValue;
+        }
+        return *retValue;
     }
 
-    const long& getValueLong(const std::string& sectionName, const std::string& key, const long &defaultValue = -1) const
+    template<typename T, typename U>
+    T &getValue(const char *sectionName, const char *key, T &retValue, const U &defaultValue) const
     {
+        retValue = defaultValue;
         MapConfig::const_iterator itSectionTmp = _mapConfig.find(sectionName);
         if (itSectionTmp == _mapConfig.end())
-            return defaultValue;
+            return retValue;
         MapSection::const_iterator itKeyTmp = itSectionTmp->second.find(key);
         if (itKeyTmp == itSectionTmp->second.end())
-            return defaultValue;
-        return itKeyTmp->second.typeLong;
+            return retValue;
+        std::stringstream stringStream;
+        const char *value = itKeyTmp->second.c_str();
+        int index = 0;
+        if (itKeyTmp->second == "true" || itKeyTmp->second == "on")
+        {
+            stringStream << true;
+            stringStream >> retValue;
+            return retValue;
+        }
+        else if (itKeyTmp->second == "false" || itKeyTmp->second == "off")
+        {
+            stringStream << false;
+            stringStream >> retValue;
+            return retValue;
+        }
+        if (value[index] == '-' || value[index] == '+')
+        {
+            index++;
+        }
+        if (value[index] == '0' && value[index + 1] == 'x')
+        {
+            long long int tmp;
+            stringStream << itKeyTmp->second;
+            stringStream >> std::setbase(16) >> tmp;
+            stringStream.str("");
+            stringStream.clear();
+            stringStream << std::setbase(10) << tmp;
+            stringStream >> retValue;
+        }
+        else
+        {
+            stringStream << itKeyTmp->second;
+            stringStream >> retValue;
+        }
+        return retValue;
     }
-
-    const unsigned long& getValueUnsignedLong(const std::string& sectionName, const std::string& key, const unsigned long &defaultValue = -1) const
-    {
-        MapConfig::const_iterator itSectionTmp = _mapConfig.find(sectionName);
-        if (itSectionTmp == _mapConfig.end())
-            return defaultValue;
-        MapSection::const_iterator itKeyTmp = itSectionTmp->second.find(key);
-        if (itKeyTmp == itSectionTmp->second.end())
-            return defaultValue;
-        return itKeyTmp->second.typeUnsignedLong;
-    }
-
-    const double& getValueDouble(const std::string& sectionName, const std::string& key, const double &defaultValue = -1) const
-    {
-        MapConfig::const_iterator itSectionTmp = _mapConfig.find(sectionName);
-        if (itSectionTmp == _mapConfig.end())
-            return defaultValue;
-        MapSection::const_iterator itKeyTmp = itSectionTmp->second.find(key);
-        if (itKeyTmp == itSectionTmp->second.end())
-            return defaultValue;
-        return itKeyTmp->second.typeDouble;
-    }
-
-    template<typename T>
-    T                   getValue(const char *sectionName, const char *key, const T &defaultValue = 0) const
-    {
-        MapConfig::const_iterator itSectionTmp = _mapConfig.find(sectionName);
-        if (itSectionTmp == _mapConfig.end())
-            return T(defaultValue);
-        MapSection::const_iterator itKeyTmp = itSectionTmp->second.find(key);
-        // std::cout << TypeToString__<T>() << std::endl;
-        if (itKeyTmp == itSectionTmp->second.end())
-            return T(defaultValue);
-        else if (typeid(T) == typeid(int) && itKeyTmp->second.isInt)
-            return itKeyTmp->second.typeInt;
-        else if (typeid(T) == typeid(long) && itKeyTmp->second.isLong)
-            return itKeyTmp->second.typeLong;
-        else if (typeid(T) == typeid(unsigned long) && itKeyTmp->second.isUnsignedLong)
-            return itKeyTmp->second.typeUnsignedLong;
-        else if (typeid(T) == typeid(double) && itKeyTmp->second.isDouble)
-            return itKeyTmp->second.typeDouble;
-        else if (typeid(T) == typeid(long double) && itKeyTmp->second.isLongDouble)
-            return itKeyTmp->second.typeLongDouble;
-        return T(defaultValue);
-    }
-
-    template<typename T>
-    bool    isType(const char *sectionName, const char *key) const
-    {
-        MapConfig::const_iterator itSectionTmp = _mapConfig.find(sectionName);
-        if (itSectionTmp == _mapConfig.end())
-            return false;
-        MapSection::const_iterator itKeyTmp = itSectionTmp->second.find(key);
-        if (itKeyTmp == itSectionTmp->second.end())
-            return false;
-        else if (typeid(T) == typeid(int))
-            return itKeyTmp->second.isInt;
-        else if (typeid(T) == typeid(long))
-            return itKeyTmp->second.isLong;
-        else if (typeid(T) == typeid(unsigned long))
-            return itKeyTmp->second.isUnsignedLong;
-        else if (typeid(T) == typeid(double))
-            return itKeyTmp->second.isDouble;
-        else if (typeid(T) == typeid(long double))
-            return itKeyTmp->second.isLongDouble;
-    }
-
-    template<typename T>
-    const std::string    &getValue(const char *sectionName, const char *key, const std::string &defaultValue = std::string()) const
-    {
-        MapConfig::const_iterator itSectionTmp = _mapConfig.find(sectionName);
-        if (itSectionTmp == _mapConfig.end())
-            return defaultValue;
-        MapSection::const_iterator itKeyTmp = itSectionTmp->second.find(key);
-        if (itKeyTmp == itSectionTmp->second.end())
-            return defaultValue;
-        return itKeyTmp->second.typeString;
-    }
-
-    /**
-     * @brief 
-     * 
-     * @param congifMap 
-     */
-    // void FillMap(std::map<const std::string, std::map<const std::string, std::string> >& congifMap) const
-    // {
-    //     if (_isRead == false)
-    //     {
-    //         throw _exception(_filename + ": was not read.");
-    //     }
-
-    //     // auto == std::pair<const std::string, std::map<const std::string, std::string> >
-    //     for (auto &section : congifMap)
-    //     {
-    //         // auto == std::map<const std::string, std::map<const std::string, std::string> >::const_iterator
-    //         auto itSectionTmp = _mapConfig.find(section.first);
-    //         if (itSectionTmp == _mapConfig.end())
-    //         {
-    //             throw _exception(_filename + ": section [" + section.first + "] not found.");
-    //         }
-    //         // auto == std::pair<const std::string, std::string>
-    //         for (auto &key : section.second)
-    //         {
-    //             // auto == std::map<const std::string, std::string>::const_iterator
-    //             auto itKeyTmp = itSectionTmp->second.find(key.first);
-    //             if (itKeyTmp == itSectionTmp->second.end())
-    //             {
-    //                 throw _exception(_filename + ": section [" + section.first + "]: key \"" + key.first + "\" not found.");
-    //             }
-    //             key.second = itKeyTmp->second;
-    //         }
-    //     }
-    // }
 
     void PrintConfig(void)
     {
-        // auto == std::pair<const std::string, std::map<const std::string, std::string> >
+        // auto == std::pair<std::string, std::map<std::string, std::string> >
         for (const auto &section : _mapConfig)
         {
             std::cout << "[" << section.first << "]" << std::endl;
@@ -457,64 +321,16 @@ public:
                 else
                     std::cout << key.first;
                 std::cout << "=";
-                if (key.second.typeString.find_first_of(' ') != key.second.typeString.npos || key.second.typeString.find_first_of('#') != key.second.typeString.npos || key.second.typeString.find_first_of(';') != key.second.typeString.npos || key.second.typeString.empty())
-                    std::cout << "\"" << key.second.typeString << "\"";
+                if (key.second.find_first_of(' ') != key.second.npos || key.second.find_first_of('#') != key.second.npos || key.second.find_first_of(';') != key.second.npos || key.second.empty())
+                    std::cout << "\"" << key.second << "\"";
                 else
-                    std::cout << key.second.typeString;
+                    std::cout << key.second;
                 std::cout << std::endl;                
             }
         }
     }
 
-    /*
-    @func:  ExportConfig
-    @param: sExportFileName
-    @brief: export at sExportFileName into .ini format the map
-    */
-    // void ExportConfig(const std::string &sExportFileName) const
-    // {
-    //     std::ofstream   fs(sExportFileName.c_str());
-        
-    //     if (fs.is_open() == false) // at error open
-    //         return ;
-
-    //     bool firstSection = true;
-    //     // auto == std::pair<const std::string, std::map<const std::string, std::string> >
-    //     for (const auto &section : _mapConfig)
-    //     {
-    //         if (firstSection == false)
-    //             fs << std::endl;
-    //         else
-    //             firstSection = false;
-    //         if (section.first.empty())
-    //             fs << "[] ; global section" << std::endl;
-    //         else
-    //             fs << "[" << section.first << "]" << std::endl;
-    //         // auto == std::pair<const std::string, std::string>
-    //         for (const auto &key : section.second)
-    //         {
-    //             if (key.first.find_first_of(' ') != key.first.npos || key.first.find_first_of('#') != key.first.npos || key.first.find_first_of(';') != key.first.npos)
-    //                 fs << "\"" << key.first << "\"";
-    //             else
-    //                 fs << key.first;
-    //             fs << "=";
-    //             if (key.second.find_first_of(' ') != key.second.npos || key.second.find_first_of('#') != key.second.npos || key.second.find_first_of(';') != key.second.npos || key.second.empty())
-    //                 fs << "\"" << key.second << "\"";
-    //             else
-    //                 fs << key.second;
-    //             fs << std::endl;                
-    //         }
-    //     }
-    //     fs.close();
-    // }
-    MapConfig   _mapConfig;
-
 private:
-
-    static const MapSection _emptyMapSection;
-
-    std::string _filename;
-    bool        _isRead;
 
     bool parseKey(const std::string &line, const std::string &currentSectionName)
     {
@@ -677,7 +493,7 @@ private:
     @func:  ReadFile
     @brief: parse and fill the map
     */
-    void readStream(const std::string &filename, std::istream &fileStream)
+    void readStream(std::istream &fileStream)
     {
         std::string currentSectionName = "";
 
@@ -691,8 +507,12 @@ private:
         }
     }
 
-};
+    MapConfig   _mapConfig;
+    std::string _filename;
+    bool        _isRead;
 
-};
+}; // end class Configator
+
+} //end namespace Conf
 
 #endif // _CONFIGATOR_HPP_
