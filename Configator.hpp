@@ -27,20 +27,6 @@ class Configator
 
 public:
 
-    class _exception : public std::exception
-    {
-
-        public:
-            _exception(std::string const &str) throw() : _str(str) {}
-            virtual ~_exception() {}
-            virtual const char *what() const throw() {return _str.c_str();}
-        private:
-            std::string _str;
-
-    };
-
-public:
-
     #ifdef CONFIGATOR_INSENSITIVE_COMPARE
         struct InsensitiveCompare
         {
@@ -83,6 +69,11 @@ public:
         readFile(filename);
     }
 
+    /**
+     * @brief Construct a new Configator object
+     * 
+     * @param mapConfig 
+     */
     Configator(const std::map<std::string, std::map<std::string, std::string> > &mapConfig):
     _isRead(false)
     {
@@ -103,7 +94,7 @@ public:
     Configator(Configator &src) = default;
 
     /**
-     * @brief 
+     * @brief Operator = overide
      * 
      * @param rhs 
      * @return Configator& 
@@ -215,15 +206,15 @@ public:
     }
 
     template<typename T, typename U>
-    T &getValue(const char *sectionName, const char *key, T *retValue, const U &defaultValue) const
+    bool getValue(const char *sectionName, const char *key, T *retValue, const U &defaultValue) const
     {
         *retValue = defaultValue;
         MapConfig::const_iterator itSectionTmp = _mapConfig.find(sectionName);
         if (itSectionTmp == _mapConfig.end())
-            return *retValue;
+            return false;
         MapSection::const_iterator itKeyTmp = itSectionTmp->second.find(key);
         if (itKeyTmp == itSectionTmp->second.end())
-            return *retValue;
+            return false;
         std::stringstream stringStream;
         const char *value = itKeyTmp->second.c_str();
         int index = 0;
@@ -231,13 +222,13 @@ public:
         {
             stringStream << true;
             stringStream >> *retValue;
-            return *retValue;
+            return true;
         }
         else if (itKeyTmp->second == "false" || itKeyTmp->second == "off")
         {
             stringStream << false;
             stringStream >> *retValue;
-            return *retValue;
+            return true;
         }
         if (value[index] == '-' || value[index] == '+')
         {
@@ -258,19 +249,19 @@ public:
             stringStream << itKeyTmp->second;
             stringStream >> *retValue;
         }
-        return *retValue;
+        return true;
     }
 
     template<typename T, typename U>
-    T &getValue(const char *sectionName, const char *key, T &retValue, const U &defaultValue) const
+    bool getValue(const char *sectionName, const char *key, T &retValue, const U &defaultValue) const
     {
         retValue = defaultValue;
         MapConfig::const_iterator itSectionTmp = _mapConfig.find(sectionName);
         if (itSectionTmp == _mapConfig.end())
-            return retValue;
+            return false;
         MapSection::const_iterator itKeyTmp = itSectionTmp->second.find(key);
         if (itKeyTmp == itSectionTmp->second.end())
-            return retValue;
+            return false;
         std::stringstream stringStream;
         const char *value = itKeyTmp->second.c_str();
         int index = 0;
@@ -278,13 +269,13 @@ public:
         {
             stringStream << true;
             stringStream >> retValue;
-            return retValue;
+            return true;
         }
         else if (itKeyTmp->second == "false" || itKeyTmp->second == "off")
         {
             stringStream << false;
             stringStream >> retValue;
-            return retValue;
+            return true;
         }
         if (value[index] == '-' || value[index] == '+')
         {
@@ -305,7 +296,7 @@ public:
             stringStream << itKeyTmp->second;
             stringStream >> retValue;
         }
-        return retValue;
+        return true;
     }
 
     void PrintConfig(void)
