@@ -1,25 +1,24 @@
 /**
- * @brief 
- * 
  * @file Configurator.hpp
- * @author BLET Mickael
- * @date 2018-09-24
+ * @author Mickaël BLET
+ * @date 2018-11-10
+ * @version v1.0
  */
 
-#ifndef _CONFIGATOR_HPP_
-# define _CONFIGATOR_HPP_
+#ifndef _CONFIG_CONFIGATOR_HPP_
+# define _CONFIG_CONFIGATOR_HPP_
 
-# include <typeinfo>
-# include <fstream>
 # include <sstream>
+# include <fstream>
 # include <iostream>
 # include <iomanip>
 # include <list>
 # include <map>
 
-#define CONFIGATOR_INSENSITIVE_COMPARE
+// options
+// #define CONFIGATOR_INSENSITIVE_COMPARE
 
-namespace Conf
+namespace Config
 {
 
 class Configator
@@ -33,12 +32,12 @@ public:
             bool operator() (const std::string & s1, const std::string & s2) const
             {
                 return std::lexicographical_compare(
-                    s1.begin (), s1.end (),   // source range
-                    s2.begin (), s2.end (),   // dest range
+                    s1.begin (), s1.end (), // source range
+                    s2.begin (), s2.end (), // dest range
                     [](const unsigned char&c1, const unsigned char&c2) // lambda compare
                     {
                         return std::tolower(c1) < std::tolower(c2);
-                    });  // comparison
+                    }); // comparison
             }
         };
 
@@ -205,8 +204,20 @@ public:
         return ret;
     }
 
+    /**
+     * @brief Get the Value object from Section and Key
+     * 
+     * @tparam T : type of return value
+     * @tparam U : type of default value
+     * @param sectionName : name of section
+     * @param key : name of key
+     * @param retValue
+     * @param defaultValue
+     * @return true : if section and key exist
+     * @return false : if section or key not exist (set retValue with defaultValue)
+     */
     template<typename T, typename U>
-    bool getValue(const char *sectionName, const char *key, T *retValue, const U &defaultValue) const
+    bool getValue(const std::string &sectionName, const std::string &key, T *retValue, const U &defaultValue) const
     {
         *retValue = defaultValue;
         MapConfig::const_iterator itSectionTmp = _mapConfig.find(sectionName);
@@ -216,8 +227,6 @@ public:
         if (itKeyTmp == itSectionTmp->second.end())
             return false;
         std::stringstream stringStream;
-        const char *value = itKeyTmp->second.c_str();
-        int index = 0;
         if (itKeyTmp->second == "true" || itKeyTmp->second == "on")
         {
             stringStream << true;
@@ -230,11 +239,12 @@ public:
             stringStream >> *retValue;
             return true;
         }
-        if (value[index] == '-' || value[index] == '+')
+        int index = 0;
+        if (itKeyTmp->second[index] == '-' || itKeyTmp->second[index] == '+')
         {
             index++;
         }
-        if (value[index] == '0' && value[index + 1] == 'x')
+        if (itKeyTmp->second[index] == '0' && itKeyTmp->second[index + 1] == 'x')
         {
             long long int tmp;
             stringStream << itKeyTmp->second;
@@ -244,6 +254,16 @@ public:
             stringStream << std::setbase(10) << tmp;
             stringStream >> *retValue;
         }
+        else if (itKeyTmp->second[index] == '0' && itKeyTmp->second.find('.') == std::string::npos)
+        {
+            long long int tmp;
+            stringStream << itKeyTmp->second;
+            stringStream >> std::setbase(8) >> tmp;
+            stringStream.str("");
+            stringStream.clear();
+            stringStream << std::setbase(10) << tmp;
+            stringStream >> retValue;
+        }
         else
         {
             stringStream << itKeyTmp->second;
@@ -252,8 +272,20 @@ public:
         return true;
     }
 
+    /**
+     * @brief Get the Value object from Section and Key
+     * 
+     * @tparam T : type of return value
+     * @tparam U : type of default value
+     * @param sectionName : name of section
+     * @param key : name of key
+     * @param retValue
+     * @param defaultValue
+     * @return true : if section and key exist
+     * @return false : if section or key not exist (set retValue with defaultValue)
+     */
     template<typename T, typename U>
-    bool getValue(const char *sectionName, const char *key, T &retValue, const U &defaultValue) const
+    bool getValue(const std::string &sectionName, const std::string &key, T &retValue, const U &defaultValue) const
     {
         retValue = defaultValue;
         MapConfig::const_iterator itSectionTmp = _mapConfig.find(sectionName);
@@ -263,8 +295,6 @@ public:
         if (itKeyTmp == itSectionTmp->second.end())
             return false;
         std::stringstream stringStream;
-        const char *value = itKeyTmp->second.c_str();
-        int index = 0;
         if (itKeyTmp->second == "true" || itKeyTmp->second == "on")
         {
             stringStream << true;
@@ -277,15 +307,26 @@ public:
             stringStream >> retValue;
             return true;
         }
-        if (value[index] == '-' || value[index] == '+')
+        int index = 0;
+        if (itKeyTmp->second[index] == '-' || itKeyTmp->second[index] == '+')
         {
             index++;
         }
-        if (value[index] == '0' && value[index + 1] == 'x')
+        if (itKeyTmp->second[index] == '0' && itKeyTmp->second[index + 1] == 'x')
         {
             long long int tmp;
             stringStream << itKeyTmp->second;
             stringStream >> std::setbase(16) >> tmp;
+            stringStream.str("");
+            stringStream.clear();
+            stringStream << std::setbase(10) << tmp;
+            stringStream >> retValue;
+        }
+        else if (itKeyTmp->second[index] == '0' && itKeyTmp->second.find('.') == std::string::npos)
+        {
+            long long int tmp;
+            stringStream << itKeyTmp->second;
+            stringStream >> std::setbase(8) >> tmp;
             stringStream.str("");
             stringStream.clear();
             stringStream << std::setbase(10) << tmp;
@@ -299,31 +340,31 @@ public:
         return true;
     }
 
-    void PrintConfig(void)
-    {
-        // auto == std::pair<std::string, std::map<std::string, std::string> >
-        for (const auto &section : _mapConfig)
-        {
-            std::cout << "[" << section.first << "]" << std::endl;
-            for (const auto &key : section.second)
-            {
-                if (key.first.find_first_of(' ') != key.first.npos || key.first.find_first_of('#') != key.first.npos || key.first.find_first_of(';') != key.first.npos)
-                    std::cout << "\"" << key.first << "\"";
-                else
-                    std::cout << key.first;
-                std::cout << "=";
-                if (key.second.find_first_of(' ') != key.second.npos || key.second.find_first_of('#') != key.second.npos || key.second.find_first_of(';') != key.second.npos || key.second.empty())
-                    std::cout << "\"" << key.second << "\"";
-                else
-                    std::cout << key.second;
-                std::cout << std::endl;                
-            }
-        }
-    }
-
 private:
 
-    bool parseKey(const std::string &line, const std::string &currentSectionName)
+    /**
+     * @brief check if character is comment
+     * 
+     * @param c 
+     * @return true : @c is comment character
+     * @return false : @c is not comment character
+     */
+    bool                isComment(const unsigned char &c)
+    {
+        if (c == ';' || c == '#')
+            return true;
+        return false;
+    }
+
+    /**
+     * @brief parse and add key in _mapConfig at currentSectionName
+     * 
+     * @param line 
+     * @param currentSectionName 
+     * @return true : if line is a key value
+     * @return false : if line is not a key value
+     */
+    bool                parseKey(const std::string &line, const std::string &currentSectionName)
     {
         std::size_t startKey;
         std::size_t endKey;
@@ -389,7 +430,7 @@ private:
         else
         {
             startValue = i;
-            while (line[i] != ';' && line[i] != '#' && line[i] != '\0')
+            while (isComment(line[i]) != true && line[i] != '\0')
                 i++;
             i--;
             while (isspace(line[i]))
@@ -399,7 +440,7 @@ private:
         }
         while (isspace(line[i]))
             i++;
-        if (line[i] == '\0' || line[i] == ';' || line[i] == '#')
+        if (isComment(line[i]) || line[i] == '\0')
         {
             _mapConfig[currentSectionName][line.substr(startKey, endKey - startKey)] = line.substr(startValue, endValue - startValue);
             return true;
@@ -407,7 +448,15 @@ private:
         return false;
     }
 
-    bool parseSection(const std::string &line, std::string *retSection)
+    /**
+     * @brief parse and get section name
+     * 
+     * @param line 
+     * @param retSection : return name of section if found
+     * @return true : if section found
+     * @return false : if section not found
+     */
+    bool                parseSection(const std::string &line, std::string *retSection)
     {
         std::size_t i = 0;
         while (isspace(line[i]))
@@ -434,7 +483,7 @@ private:
         i++;
         while (isspace(line[i]))
             i++;
-        if (line[i] == '\0' || line[i] == ';' || line[i] == '#')
+        if (isComment(line[i]) || line[i] == '\0')
         {
             *retSection = line.substr(start, end - start);
             return true;
@@ -442,57 +491,36 @@ private:
         return false;
     }
 
-    bool globalSection(const std::string &line)
+    /**
+     * @brief detect if line is empty or comment
+     * 
+     * @param line 
+     * @return true : line is empty or comment
+     * @return false : line is not empty or comment
+     */
+    bool                emptyOrComment(const std::string &line)
     {
         std::size_t i = 0;
         while (isspace(line[i]))
             i++;
-        if (line[i] != '[')
-            return false;
-        i++;
-        if (line[i] != ']')
-            return false;
-        i++;
-        while (isspace(line[i]))
-            i++;
-        if (line[i] == '\0' || line[i] == ';' || line[i] == '#')
+        if (isComment(line[i]) || line[i] == '\0')
             return true;
         return false;
     }
 
-    bool comment(const std::string &line)
-    {
-        std::size_t i = 0;
-        while (isspace(line[i]))
-            i++;
-        if (line[i] == ';' || line[i] == '#')
-            return true;
-        return false;
-    }
-
-    bool empty(const std::string &line)
-    {
-        for (const char &c : line)
-        {
-            if (!isspace(c))
-                return false;
-        }
-        return true;
-    }
-
-    /*
-    @func:  ReadFile
-    @brief: parse and fill the map
-    */
-    void readStream(std::istream &fileStream)
+    /**
+     * @brief parse and fill the map from fileStream
+     * 
+     * @param fileStream 
+     */
+    void                readStream(std::istream &fileStream)
     {
         std::string currentSectionName = "";
 
         std::string line;
         while(std::getline(fileStream, line))
         {
-            if (!empty(line)
-            &&  !comment(line)
+            if (!emptyOrComment(line)
             &&  !parseSection(line, &currentSectionName))
                 parseKey(line, currentSectionName);
         }
@@ -504,6 +532,6 @@ private:
 
 }; // end class Configator
 
-} //end namespace Conf
+} // end namespace Config
 
 #endif // _CONFIGATOR_HPP_
