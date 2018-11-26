@@ -1,7 +1,7 @@
 /**
  * @file Configurator.hpp
  * @author Mickaël BLET
- * @date 2018-11-10
+ * @date 2018-11-26
  * @version v1.0
  */
 
@@ -141,16 +141,21 @@ public:
     }
 
     /**
-     * @brief 
+     * @brief Check if file is read
      * 
-     * @return true 
-     * @return false 
+     * @return true : file is read
+     * @return false : file is not read
      */
     bool isRead(void) const
     {
         return _isRead;
     }
 
+    /**
+     * @brief Set the Config object
+     * 
+     * @param mapConfig 
+     */
     void setConfig(const std::map<const std::string, std::map<const std::string, std::string> > &mapConfig)
     {
         for (const std::pair<const std::string, std::map<const std::string, std::string> > &sectionMap : mapConfig)
@@ -162,6 +167,12 @@ public:
         }
     }
 
+    /**
+     * @brief Set the Section object by Name
+     * 
+     * @param section 
+     * @param mapSection 
+     */
     void setSection(const std::string &section, const std::map<const std::string, std::string> &mapSection)
     {
         for (const std::pair<const std::string, std::string> &keyMap : mapSection)
@@ -170,6 +181,14 @@ public:
         }
     }
 
+    /**
+     * @brief Set the Key object by sction name and key name
+     * 
+     * @tparam T 
+     * @param section 
+     * @param key 
+     * @param value 
+     */
     template<typename T>
     void setKey(const std::string &section, const std::string &key, const T &value)
     {
@@ -178,6 +197,11 @@ public:
         _mapConfig[section][key] = ss.str();
     }
 
+    /**
+     * @brief Get the copy Config object
+     * 
+     * @return std::map<std::string, std::map<std::string, std::string> > 
+     */
     std::map<std::string, std::map<std::string, std::string> > getConfig(void) const
     {
         std::map<std::string, std::map<std::string, std::string> > ret;
@@ -191,6 +215,11 @@ public:
         return ret;
     }
 
+    /**
+     * @brief Get the copy Section object from section name
+     * 
+     * @return std::map<std::string, std::map<std::string, std::string> > 
+     */
     std::map<std::string, std::string> getSection(const std::string &section) const
     {
         std::map<std::string, std::string> ret;
@@ -534,4 +563,4 @@ private:
 
 } // end namespace Config
 
-#endif // _CONFIGATOR_HPP_
+#endif // _CONFIG_CONFIGATOR_HPP_

@@ -1,1 +1,3 @@
-# SimpleIniReader
+# Configator
+
+## Example
