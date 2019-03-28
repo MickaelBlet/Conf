@@ -1,4 +1,6 @@
-#include "Configator.hpp"
+#include <iostream>
+
+#include "configator.hpp"
 
 struct TestConfig
 {
