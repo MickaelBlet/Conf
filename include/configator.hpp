@@ -146,16 +146,17 @@ public:
     bool readFile(const std::string& filename)
     {
         std::lock_guard<std::mutex> lockGuard(_mutex);
+        _mapConfig.clear();
+        _filename = "";
         _isRead = false;
 
-        std::ifstream fileStream(filename.c_str());
+        std::ifstream fileStream(filename.c_str()); // open file
         if (fileStream.is_open() == false)
             return false;
 
-        _mapConfig.clear();
         _filename = filename;
         _isRead = true;
-        readStream(fileStream);
+        readStream(fileStream); // parse file
         fileStream.close();
         return true;
     }
@@ -163,9 +164,9 @@ public:
     /**
      * @brief Get the Filename object
      * 
-     * @return const std::string& 
+     * @return const std::string& : copy of filename
      */
-    const std::string& getFilename(void) const
+    std::string getFilename(void) const
     {
         std::lock_guard<std::mutex> lockGuard(_mutex);
         return _filename;
@@ -420,7 +421,7 @@ public:
         return retValue;
     }
 
-        /**
+    /**
      * @brief Get the Value object from Section and Key
      * 
      * @tparam T : type of return value
@@ -440,6 +441,17 @@ public:
         if (itKeyTmp == itSectionTmp->second.end())
             throw std::out_of_range("Configator:" + _filename + " key " + key + " in " + sectionName + " not found");
         return convertValue<T>(itKeyTmp->second);
+    }
+
+    void print(void)
+    {
+        for (const auto &sectionMap : _mapConfig)
+        {
+            for (const auto &keyMap : sectionMap.second)
+            {
+                std::cout << sectionMap.first << ": " << "\"" << keyMap.first << "\" = \"" << keyMap.second << "\"" << std::endl;
+            }
+        }
     }
 
 private:
@@ -517,56 +529,73 @@ private:
      * @return true : if line is a key value
      * @return false : if line is not a key value
      */
-    static bool parseKey(const std::string &line, std::string *retKey, std::string *retValue)
+    static bool parseKey(std::string line, std::string *retKey, std::string *retValue)
     {
         std::size_t startKey;
         std::size_t endKey;
         std::size_t startValue;
         std::size_t endValue;
         std::size_t i = 0;
+        char        quote;
 
-        for (;isspace(line[i]);i++);
+        for ( ; isspace(line[i]) ; ++i);
         if (line[i] == '=')
             return false; // first element not found
-        if (line[i] == '\"')
+        if (line[i] == '\"' || line[i] == '\'')
         {
-            for (startKey = ++i ; line[i] != '\"' ; ++i)
+            quote = line[i];
+            ++i; // jump quote
+            startKey = i;
+            for (startKey = i ; line[i] != quote; ++i)
             {
+                if (line[i] == '\\')
+                    line.erase(i, 1);
                 if (line[i] == '\0')
-                    return false; // '"' not found
+                    return false; // end quote not found
             }
-            endKey = i++;
+            endKey = i;
+            ++i;
         }
         else
         {
-            for (startKey = i ; line[i] != '=' ; ++i)
+            startKey = i;
+            for ( ; line[i] != '=' ; ++i)
             {
                 if (line[i] == '\0')
                     return false; // '=' not found
             }
-            while (isspace(line[--i]));
-            endKey = ++i;
+            for (--i ; isspace(line[i]) ; --i);
+            ++i;
+            endKey = i;
         }
-        for (;isspace(line[i]);i++);
-        if (line[i++] != '=')
+        for ( ; isspace(line[i]) ; ++i);
+        if (line[i] != '=')
             return false; // '=' not found
-        for (;isspace(line[i]);i++);
-        if (line[i] == '\"')
+        for (++i ; isspace(line[i]) ; ++i);
+        if (line[i] == '\"' || line[i] == '\'')
         {
-            for (startValue = ++i ; line[i] != '\"' ; ++i)
+            quote = line[i];
+            ++i;
+            startValue = i;
+            for ( ; line[i] != quote ; ++i)
             {
+                if (line[i] == '\\')
+                    line.erase(i, 1);
                 if (line[i] == '\0')
-                    return false; // '"' not found
+                    return false; // end quote not found
             }
-            endValue = i++;
+            endValue = i;
+            ++i;
         }
         else
         {
-            for (startValue = i ; isComment(line[i]) != true && line[i] != '\0' ; ++i);
-            while (isspace(line[--i]));
-            endValue = ++i;
+            startValue = i;
+            for ( ; isComment(line[i]) != true && line[i] != '\0' ; ++i);
+            for (--i ; isspace(line[i]) ; --i);
+            ++i;
+            endValue = i;
         }
-        for (;isspace(line[i]);i++);
+        for ( ; isspace(line[i]) ; ++i);
         if (line[i] != '\0' && !isComment(line[i]))
             return false;
         *retKey = line.substr(startKey, endKey - startKey);
@@ -588,20 +617,21 @@ private:
         std::size_t end;
         std::size_t i = 0;
 
-        for (;isspace(line[i]);++i);
-        if (line[i++] != '[')
+        for ( ; isspace(line[i]) ; ++i);
+        if (line[i] != '[')
             return false;
-        for (;isspace(line[i]);++i);
+        for (++i ; isspace(line[i]) ; ++i);
         start = i;
-        while (line[i] != ']')
+        for ( ; line[i] != ']' ; ++i)
         {
-            if (line[i++] == '\0')
+            if (line[i] == '\0')
                 return false;
         }
-        while (isspace(line[--i]));
-        end = ++i;
-        while (line[i++] != ']');
-        for (;isspace(line[i]);++i);
+        for (--i ; isspace(line[i]) ; --i);
+            ++i;
+        end = i;
+        for ( ; line[i] != ']' ; ++i);
+        for (++i ; isspace(line[i]) ; ++i);
         if (line[i] != '\0' && !isComment(line[i]))
             return false;
         *retSection = line.substr(start, end - start);
@@ -619,7 +649,7 @@ private:
     {
         std::size_t i = 0;
 
-        for (;isspace(line[i]);++i);
+        for ( ; isspace(line[i]) ; ++i);
         if (line[i] != '\0' && !isComment(line[i]))
             return false;
         return true;
