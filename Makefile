@@ -75,9 +75,9 @@ DEBUG_COMPILER			=	g++
 RELEASE_COMPILER		=	g++
 TEST_COMPILER			=	g++
 
-DEBUG_FLAGS				=	-std=c++11 -Wall -Wextra -ggdb3
-RELEASE_FLAGS			=	-std=c++11 -Wall -Wextra -Werror -O2
-TEST_FLAGS				=	-std=c++11 -Wall -Wextra -ggdb3
+DEBUG_FLAGS				=	-std=c++98 -Wall -Wextra -ggdb3
+RELEASE_FLAGS			=	-std=c++98 -Wall -Wextra -Werror -O2
+TEST_FLAGS				=	-std=c++98 -Wall -Wextra -ggdb3
 
 DEBUG_OPTIONS			=	-DVERSION=\"$(VERSION)\" -DCONFIGATOR_INSENSITIVE_COMPARE \
 							-I$(INCLUDE_DIRECTORY)
@@ -89,8 +89,8 @@ TEST_OPTIONS			=	-DVERSION=\"$(VERSION)\" -DCONFIGATOR_INSENSITIVE_COMPARE \
 							-l$(LIBRARY_NAME)-debug \
 							-lgtest -lgtest_main -lgmock -lpthread
 
-DEBUG_DEPENDENCIES		=	
-RELEASE_DEPENDENCIES	=	
+DEBUG_DEPENDENCIES		=
+RELEASE_DEPENDENCIES	=
 TEST_DEPENDENCIES		=	$(LIBRARY_DIRECTORY)lib$(LIBRARY_NAME)-debug.a
 
 include ./module.mk

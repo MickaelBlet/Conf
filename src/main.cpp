@@ -14,32 +14,59 @@ struct TestConfig
 
 int main(void)
 {
-    using namespace Config;
+    // using namespace mblet;
 
-    Configator conf("./test.ini");
+    mblet::Configator conf("./test.ini");
     if (conf.isRead() == false)
     {
         std::cerr << "Open configuration Fail" << std::endl;
         return 1;
     }
 
-    TestConfig testConfig;
+    int i = conf[""]["42"].get<int>();
+    double d = conf[""]["42"].get<double>();
 
-    testConfig.valueString = conf.getValue<decltype(testConfig.valueString)>("", "42");
-    testConfig.valueBool = conf.getValue<decltype(testConfig.valueBool)>("", "42");
-    testConfig.valueInt = conf.getValue<decltype(testConfig.valueInt)>("", "42");
-    testConfig.valueLong = conf.getValue<decltype(testConfig.valueLong)>("", "42");
-    testConfig.valueULong = conf.getValue<decltype(testConfig.valueULong)>("", "42");
-    testConfig.valueDouble = conf.getValue<decltype(testConfig.valueDouble)>("", "42");
+    std::cout << i << std::endl;
+    std::cout << d << std::endl;
 
-    std::cout << "string: " << testConfig.valueString << std::endl;
-    std::cout << "bool  : " << testConfig.valueBool << std::endl;
-    std::cout << "int   : " << testConfig.valueInt << std::endl;
-    std::cout << "long  : " << testConfig.valueLong << std::endl;
-    std::cout << "ulong : " << testConfig.valueULong << std::endl;
-    std::cout << "double: " << testConfig.valueDouble << std::endl;
+    // for (const auto &item : conf["test"]["k"])
+    // {
+    //     std::cout << item.first << ":" << item.second << std::endl;
+    // }
 
-    conf.print();
+    // Configator::Map map;
+
+    // map["TEST"]["2"] = "3";
+    // map["1"]["2"]["3"] = "4";
+
+    // std::string test = map["1"]["2"]["3"].value;
+
+    // std::cout << test << std::endl;
+
+    // conf.setConfig(map);
+
+    // conf[1][0][0] = "5";
+
+    // std::cout << conf["1"]["2"]["3"].value << std::endl;
+
+    // TestConfig testConfig;
+
+    // // testConfig.valueString = conf.getValue<std::string>("", "42");
+    // testConfig.valueString = conf.getValue<std::string>("TEST", "2");
+    // testConfig.valueBool = conf.getValue<bool>("TEST", "2");
+    // // testConfig.valueInt = conf.getValue("", "42");
+    // // testConfig.valueLong = conf.getValue("", "42");
+    // // testConfig.valueULong = conf.getValue("", "42");
+    // // testConfig.valueDouble = conf.getValue("", "42");
+
+    // std::cout << "string: " << testConfig.valueString << std::endl;
+    // std::cout << "bool  : " << std::boolalpha << testConfig.valueBool << std::endl;
+    // std::cout << "int   : " << testConfig.valueInt << std::endl;
+    // std::cout << "long  : " << testConfig.valueLong << std::endl;
+    // std::cout << "ulong : " << testConfig.valueULong << std::endl;
+    // std::cout << "double: " << testConfig.valueDouble << std::endl;
+
+    std::cout << conf.dump(2) << std::endl;
 
     return 0;
 }

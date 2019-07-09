@@ -2,56 +2,37 @@
 
 ini reader for c++
 
-## Example
-
+### Access by map
+```ini
+$ cat ./test1.ini
+[test]
+42=-42.42
+```
 ```cpp
-#include "configator.hpp"
+mblet::Configator conf("./test1.ini");
+std::cout << conf["test"]["42"] << std::endl;
+// output:
+// -42.42
+```
 
-using namespace std;
-
-struct TestConfig
-{
-    string          valueString;
-    bool            valueBool;
-    int             valueInt;
-    long            valueLong;
-    unsigned long   valueULong;
-    double          valueDouble;
-};
-
-int main()
-{
-    using namespace Config;
-
-    Configator conf("./test.ini");
-    if (conf.isRead() == false)
-    {
-        cerr << "Open configuration Fail" << endl;
-        return 1;
-    }
-
-    TestConfig testConfig;
-
-    if (conf.getValue("", "42", testConfig.valueString, "0") == false)
-        cerr << "not find key: " << "42" << " in section: [" << "" << "]" << endl;
-    if (conf.getValue("", "42", testConfig.valueBool, false) == false)
-        cerr << "not find key: " << "42" << " in section: [" << "" << "]" << endl;
-    if (conf.getValue("", "42", testConfig.valueInt, 0) == false)
-        cerr << "not find key: " << "42" << " in section: [" << "" << "]" << endl;
-    if (conf.getValue("", "42", testConfig.valueLong, 0) == false)
-        cerr << "not find key: " << "42" << " in section: [" << "" << "]" << endl;
-    if (conf.getValue("", "42", testConfig.valueULong, 0) == false)
-        cerr << "not find key: " << "42" << " in section: [" << "" << "]" << endl;
-    if (conf.getValue("", "42", testConfig.valueDouble, 0) == false)
-        cerr << "not find key: " << "42" << " in section: [" << "" << "]" << endl;
-
-    cout << "string: " << testConfig.valueString << endl;
-    cout << "bool  : " << testConfig.valueBool << endl;
-    cout << "int   : " << testConfig.valueInt << endl;
-    cout << "long  : " << testConfig.valueLong << endl;
-    cout << "ulong : " << testConfig.valueULong << endl;
-    cout << "double: " << testConfig.valueDouble << endl;
-
-    return 0;
-}
+### Convert value
+```ini
+$ cat ./test2.ini
+[test]
+0=true   ;bool
+1=-42.42 ;dec
+2=0x42   ;hex
+3=042    ;octal
+```
+```cpp
+mblet::Configator conf("./test2.ini");
+std::cout << conf["test"]["0"].get<int>() << std::endl;
+std::cout << conf["test"]["1"].get<int>() << std::endl;
+std::cout << conf["test"]["2"].get<int>() << std::endl;
+std::cout << conf["test"]["3"].get<int>() << std::endl;
+// output:
+// 1
+// -42
+// 66
+// 34
 ```
