@@ -1,6 +1,6 @@
 /*
  * @file Configator.hpp
- * @author Mickaël BLET
+ * @author Mickael BLET
  */
 
 #ifndef _CONFIG_CONFIGATOR_HPP_
@@ -11,6 +11,8 @@
 # include <iostream>
 # include <iomanip> // setbase
 # include <vector>
+
+# include <stdlib.h>
 
 namespace mblet
 {
@@ -30,6 +32,34 @@ public:
      */
     struct Map : public std::vector<std::pair<std::string, Map> >
     {
+        class Exception : public std::exception
+        {
+        public:
+            Exception(const char* str) throw():
+            _str(str) {
+                return ;
+            }
+            virtual ~Exception() throw() {
+                return ;
+            }
+            virtual const char* what() const throw() {
+                return _str.c_str();
+            }
+        private:
+            std::string _str;
+        };
+
+        /**
+         * @brief Construct a new Map object
+         *
+         */
+        Map():
+        std::vector<std::pair<std::string, Map> >(),
+        value(std::string())
+        {
+            return ;
+        }
+
         /**
          * @brief overide operator for set value from std::string
          *
@@ -88,7 +118,7 @@ public:
             Map::const_iterator it = find(str);
             if (it != this->end())
                 return it->second;
-            throw std::out_of_range("");
+            throw Map::Exception("key not found");
         }
 
         /**
@@ -172,22 +202,17 @@ public:
             }
             if (value[index] == '0' && value[index + 1] == 'x')
             {
-                long long int tmp;
-                stringStream << value;
-                stringStream >> std::setbase(16) >> tmp;
-                stringStream.str("");
-                stringStream.clear();
-                stringStream << std::setbase(10) << tmp;
+                stringStream << strtoll(value.c_str(), NULL, 16);
+                stringStream >> retValue;
+            }
+            else if (value[index] == '0' && value[index + 1] == 'b')
+            {
+                stringStream << strtoull(value.c_str() + index + 2, NULL, 2);
                 stringStream >> retValue;
             }
             else if (value[index] == '0' && value.find('.') == std::string::npos)
             {
-                long long int tmp;
-                stringStream << value;
-                stringStream >> std::setbase(8) >> tmp;
-                stringStream.str("");
-                stringStream.clear();
-                stringStream << std::setbase(10) << tmp;
+                stringStream << strtoll(value.c_str(), NULL, 8);
                 stringStream >> retValue;
             }
             else
@@ -319,6 +344,16 @@ public:
     }
 
     /**
+     * @brief Get the Config object
+     *
+     * @return const Map& : all mac config
+     */
+    const Map &getConfig(void) const
+    {
+        return _mapConfig;
+    }
+
+    /**
      * @brief overide operator for get map from index
      *
      * @param index : at index
@@ -336,6 +371,28 @@ public:
      * @return Map& : map from string
      */
     Map &operator[](const std::string &str)
+    {
+        return _mapConfig[str];
+    }
+
+    /**
+     * @brief overide operator for get const map from index
+     *
+     * @param index : at index
+     * @return Map& : map from index
+     */
+    const Map &operator[](std::size_t index) const
+    {
+        return _mapConfig[index];
+    }
+
+    /**
+     * @brief overide operator for get const map from string
+     *
+     * @param str : at str
+     * @return Map& : map from string
+     */
+    const Map &operator[](const std::string &str) const
     {
         return _mapConfig[str];
     }
@@ -596,7 +653,7 @@ private:
                 return false;
         }
         for (--i ; isspace(line[i]) ; --i);
-            ++i;
+        ++i;
         end = i;
         for ( ; line[i] != ']' ; ++i);
         for (++i ; isspace(line[i]) ; ++i);
