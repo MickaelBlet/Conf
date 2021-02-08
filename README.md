@@ -32,18 +32,20 @@ std::cout << conf["test"]["1"].get<int>() << std::endl;
 std::cout << conf["test"]["2"].get<int>() << std::endl;
 std::cout << conf["test"]["3"].get<int>() << std::endl;
 std::cout << conf["test"]["4"].get<int>() << std::endl;
+std::cout << conf["test"]["5"].get<int>(42) << std::endl; // take default key
 // output:
 // 1
 // -42
 // 66
 // 5
 // 34
+// 42
 ```
 
 ### Table value
 ```ini
 $ cat ./test3.ini
-[test]
+[    test     ]    ; commment line
 table[]=1
 table[]=2
 map[key]=value
@@ -67,13 +69,16 @@ std::cout << conf["test"]["map"]["key1"]["key2"] << std::endl;
 $ cat ./test4.ini
 [test]
 "32[\\]"      =     '"2 ;"#\'## i\\' # test with comment in line
-42["key[]"]      =     "value" ; comment line
+42     ["key[]"]      =     "value" ; comment line
+'42 space  ' ["key[]"]      =     " value space " ; comment line
 ```
 ```cpp
 mblet::Configator conf("./test4.ini");
 std::cout << conf["test"]["32[\\]"] << std::endl;
 std::cout << conf["test"]["42"]["key[]"] << std::endl;
+std::cout << conf["test"]["42 space  "]["key[]"] << std::endl;
 // output:
 // "2 ;"#'## i\
 // value
+//  value space
 ```

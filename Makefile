@@ -1,18 +1,43 @@
-SRC=$(wildcard *.cpp)
-OBJ=$(SRC:.cpp=.o)
-NAME=configator
+NAME					:=	configator
+STATIC_LIBRARY_NAME		:=	$(NAME).a
+DYNAMIC_LIBRARY_NAME	:=	lib$(NAME).so
 
-all:		$(NAME)
+COMPILER				:=	$(CXX)
+COMPILER_FLAG			:=	-std=c++98 -pedantic -fPIC -Wall -Wextra -Werror $(CPPFLAGS)
+INCLUDES				:=	-I./include
+LIVRARIES				:=
 
-$(NAME):	$(OBJ)
-	$(CXX) -std=c++98 -pedantic -Wall -Wextra -Werror -o $@ $^
+SOURCES_EXTENTION		:=	cpp
 
-%.o:		%.cpp
-	$(CXX) -std=c++98 -pedantic -Wall -Wextra -Werror -o $@ -c $<
+SOURCE_DIRECTORY		:=	./src
+BUILD_DIRECTORY			:=	./build
+LIBRARY_DIRECTORY		:=	./lib
 
-.PHONY:		clean re
+SOURCES					=	$(shell find $(SOURCE_DIRECTORY) -type f -name "*.$(SOURCES_EXTENTION)")
+OBJECTS					:=	$(patsubst $(SOURCE_DIRECTORY)/%,$(BUILD_DIRECTORY)/%,$(SOURCES:.$(SOURCES_EXTENTION)=.o))
+
+all: $(LIBRARY_DIRECTORY)/$(STATIC_LIBRARY_NAME) $(LIBRARY_DIRECTORY)/$(DYNAMIC_LIBRARY_NAME)
 
 clean:
-	$(RM) $(OBJ) $(NAME)
+	$(RM) -r $(BUILD_DIRECTORY) $(LIBRARY_DIRECTORY)
 
-re:			clean all
+re: clean
+	$(MAKE) all
+
+.PHONY: all clean re
+
+$(BUILD_DIRECTORY):
+	mkdir -p $(sort $(dir $(OBJECTS)))
+$(LIBRARY_DIRECTORY):
+	mkdir -p $@
+
+$(LIBRARY_DIRECTORY)/$(STATIC_LIBRARY_NAME): $(OBJECTS) | $(LIBRARY_DIRECTORY)
+	ar rc $@ $^
+
+$(LIBRARY_DIRECTORY)/$(DYNAMIC_LIBRARY_NAME): $(OBJECTS) | $(LIBRARY_DIRECTORY)
+	$(COMPILER) -shared -o $@ $^
+
+$(BUILD_DIRECTORY)/%.o: $(SOURCE_DIRECTORY)/%.$(SOURCES_EXTENTION) | $(BUILD_DIRECTORY)
+	$(COMPILER) $(COMPILER_FLAG) -MMD -o $@ -c $< $(INCLUDES)
+
+-include $(OBJECTS:.o=.d)
