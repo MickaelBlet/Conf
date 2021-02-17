@@ -289,10 +289,10 @@ static bool s_parseSection(std::string line, std::list<std::string>* retSection,
         ++i; // jump character ';' or '#'
         s_stringJumpSpace(line, i);
         start = i;
-        while (line[i] != '\0' && !s_isComment(line[i])) {
+        while (line[i] != '\0') {
             ++i;
         }
-        --i; // revert jump '\0' or ';' or '#'
+        --i; // revert jump '\0'
         while (i > 0 && isspace(line[i])) {
             --i;
         }
@@ -452,10 +452,10 @@ static bool s_parseKey(std::string line, std::list<std::string>* retKey, std::st
         ++i; // jump character ';' or '#'
         s_stringJumpSpace(line, i);
         start = i;
-        while (line[i] != '\0' && !s_isComment(line[i])) {
+        while (line[i] != '\0') {
             ++i;
         }
-        --i; // revert jump '\0' or ';' or '#'
+        --i; // revert jump '\0'
         while (i > 0 && isspace(line[i])) {
             --i;
         }
