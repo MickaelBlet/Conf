@@ -102,7 +102,7 @@ const Configator::Map& Configator::getConfig() const {
     return _mapConfig;
 }
 
-std::string Configator::getFilename() const {
+const std::string& Configator::getFilename() const {
     return _filename;
 }
 
@@ -205,11 +205,13 @@ static bool s_emptyOrComment(const std::string& line, std::string* retComment) {
  * @return true
  * @return false
  */
-static bool s_parseSection(std::string line, std::string* retSection, std::string* retComment) {
+static bool s_parseSection(std::string line, std::list<std::string>* retSection, std::string* retComment) {
     char        quote;
     std::size_t start;
     std::size_t end;
     std::size_t last;
+    std::size_t level = 0;
+    std::size_t saveLevel = 0;
     std::size_t i = 0;
 
     s_stringJumpSpace(line, i);
@@ -217,8 +219,12 @@ static bool s_parseSection(std::string line, std::string* retSection, std::strin
     if (line[i] != '[') {
         return false;
     }
-    ++i; // jump character '['
-    s_stringJumpSpace(line, i);
+    while (line[i] == '[') {
+        ++i; // jump character '['
+        ++level;
+        s_stringJumpSpace(line, i);
+    }
+
     // start section name
     if (line[i] == '\"' || line[i] == '\'') {
         // get quote character
@@ -238,9 +244,6 @@ static bool s_parseSection(std::string line, std::string* retSection, std::strin
         end = i;
         ++i; // jump quote
         s_stringJumpSpace(line, i);
-        if (line[i] != ']') {
-            return false;
-        }
     }
     else {
         start = i;
@@ -259,12 +262,29 @@ static bool s_parseSection(std::string line, std::string* retSection, std::strin
         end = i;
         i = last;
     }
-    ++i; // jump character ']'
+    saveLevel = level;
+    while (line[i] == ']') {
+        ++i; // jump character ']'
+        --level;
+        s_stringJumpSpace(line, i);
+    }
+    if (level != 0) {
+        return false;
+    }
+    if (saveLevel == 1) {
+        retSection->clear();
+        retSection->push_back(line.substr(start, end - start));
+    }
+    else if (saveLevel == retSection->size() + 1) {
+        retSection->push_back(line.substr(start, end - start));
+    }
+    else {
+        return false;
+    }
     s_stringJumpSpace(line, i);
     if (line[i] != '\0' && !s_isComment(line[i])) {
         return false;
     }
-    *retSection = line.substr(start, end - start);
     if (s_isComment(line[i])) {
         ++i; // jump character ';' or '#'
         s_stringJumpSpace(line, i);
@@ -446,8 +466,18 @@ static bool s_parseKey(std::string line, std::list<std::string>* retKey, std::st
     return true;
 }
 
+static Configator::Map& s_section(Configator::Map& map, const std::list<std::string>& sections) {
+    std::list<std::string>::const_iterator itSection;
+
+    Configator::Map* pMap = &map;
+    for (itSection = sections.begin(); itSection != sections.end(); ++itSection) {
+        pMap = &((*pMap)[*itSection]);
+    }
+    return *pMap;
+}
+
 void Configator::readStream(std::istream& stream) {
-    std::string section = "";
+    std::list<std::string> sections;
     std::string line    = "";
 
     while (std::getline(stream, line)) {
@@ -456,20 +486,23 @@ void Configator::readStream(std::istream& stream) {
         std::string value   = "";
 
         if (s_emptyOrComment(line, &comment)) {
-            if (_mapConfig[section].comment.size() > 0) {
-                _mapConfig[section].comment.append("\n");
+            Configator::Map& map = s_section(_mapConfig, sections);
+            if (!map.comment.empty()) {
+                map.comment.append("\n");
             }
-            _mapConfig[section].comment.append(comment);
+            map.comment.append(comment);
         }
-        else if (s_parseSection(line, &section, &comment)) {
-            _mapConfig[section].comment = comment;
+        else if (s_parseSection(line, &sections, &comment)) {
+            Configator::Map& map = s_section(_mapConfig, sections);
+            map.comment = comment;
         }
         else if (s_parseKey(line, &keys, &value, &comment)) {
-            Configator::Map* tmpMap = &(_mapConfig[section]);
+            Configator::Map& map = s_section(_mapConfig, sections);
+            Configator::Map* tmpMap = &(map);
             std::list<std::string>::iterator it;
 
             for (it = keys.begin(); it != keys.end() ; ++it) {
-                if (it->size() == 0) {
+                if (it->empty()) {
                     std::ostringstream oss("");
                     oss << tmpMap->size();
                     tmpMap = &((*tmpMap)[oss.str()]);

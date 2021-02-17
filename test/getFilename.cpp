@@ -29,16 +29,23 @@ GTEST_TEST(configurator_getFilename, test) {
     // create example file
     std::ofstream fileStream(testFile, std::ofstream::out | std::ofstream::trunc);
     fileStream  << "[test]"                     << "\n"
+                << "[[test]]     ;titi"              << "\n"
+                << "[[[test]]] ; teststst"                   << "\n"
                 << "; test testt    "           << "\n"
                 << "; test testt    "           << "\n"
                 << "; test testt    "           << "\n"
                 << "; test testt    "           << "\n"
                 << "test = 42   ;    yooo   "   << "\n"
-                << "#dede";
+                << "[]" << "\n"
+                << "[[]]" << "\n"
+                << "test = 42   ;    yooo   "   << "\n"
+                << "[new]" << "\n"
+                << "test = 42   ;    yooo   "   << "\n";
     fileStream.close();
     mblet::Configator conf;
     EXPECT_EQ(conf.readFile(testFile), true);
-    std::cout << conf["test"].comment << std::endl;
+    std::cout << conf["test"]["test"].comment << std::endl;
+    conf.dump();
     // remove example file
     remove(testFile);
     EXPECT_EQ(conf.getFilename(), "test.ini");

@@ -176,7 +176,7 @@ class Configator {
             T retValue;
             std::stringstream stringStream("");
 
-            if (value.size() == 0) {
+            if (value.empty()) {
                 stringStream << defaultValue;
             }
             else {
@@ -192,6 +192,36 @@ class Configator {
       private:
 
         void valueToStream(std::ostream& stringStream) const;
+
+    };
+
+    /**
+    * @brief Map exception
+    */
+    class Exception : public std::exception {
+
+      public:
+        /**
+         * @brief Construct a new Exception object
+         *
+         * @param str : exception message
+         */
+        Exception(const char* str) throw();
+
+        /**
+         * @brief Destroy the Exception object
+         */
+        virtual ~Exception() throw();
+
+        /**
+         * @brief get the exception message
+         *
+         * @return const char* : exception message
+         */
+        virtual const char* what() const throw();
+
+      private:
+        std::string _str;
 
     };
 
@@ -241,7 +271,7 @@ class Configator {
      *
      * @return std::string : copy of filename
      */
-    std::string getFilename() const;
+    const std::string& getFilename() const;
 
     /**
      * @brief Check if file is read
@@ -305,18 +335,18 @@ class Configator {
      */
     std::ostream& dump(std::ostream& oss = std::cout, std::size_t indent = 4) const;
 
-  private:
+  protected:
+    Map         _mapConfig;
+    std::string _filename;
+    bool        _isRead;
 
+  private:
     /**
      * @brief parse and fill the map from stream
      *
      * @param stream
      */
     void readStream(std::istream& stream);
-
-    Map         _mapConfig;
-    std::string _filename;
-    bool        _isRead;
 
 }; // class Configator
 
