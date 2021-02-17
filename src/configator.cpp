@@ -183,10 +183,10 @@ static bool s_emptyOrComment(const std::string& line, std::string* retComment) {
     ++i; // jump character ';' or '#'
     s_stringJumpSpace(line, i);
     start = i;
-    while (line[i] != '\0' && !s_isComment(line[i])) {
+    while (line[i] != '\0') {
         ++i;
     }
-    --i; // revert jump '\0' or ';' or '#'
+    --i; // revert jump '\0'
     while (i > 0 && isspace(line[i])) {
         --i;
     }
