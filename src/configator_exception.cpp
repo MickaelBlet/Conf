@@ -27,14 +27,25 @@
 
 namespace mblet {
 
-Configator::Exception::Exception(const char* str) throw():
+Configator::ExceptionParseSection::ExceptionParseSection(const char* str) throw():
     _str(str)
 {}
 
-Configator::Exception::~Exception() throw()
+Configator::ExceptionParseSection::~ExceptionParseSection() throw()
 {}
 
-const char* Configator::Exception::what() const throw() {
+const char* Configator::ExceptionParseSection::what() const throw() {
+    return _str.c_str();
+}
+
+Configator::ExceptionParseKey::ExceptionParseKey(const char* str) throw():
+    _str(str)
+{}
+
+Configator::ExceptionParseKey::~ExceptionParseKey() throw()
+{}
+
+const char* Configator::ExceptionParseKey::what() const throw() {
     return _str.c_str();
 }
 

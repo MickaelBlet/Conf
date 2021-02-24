@@ -275,11 +275,17 @@ static bool s_parseSection(std::string line, std::list<std::string>* retSection,
         retSection->clear();
         retSection->push_back(line.substr(start, end - start));
     }
-    else if (saveLevel == retSection->size() + 1) {
-        retSection->push_back(line.substr(start, end - start));
-    }
     else {
-        return false;
+        --saveLevel;
+        while (retSection->size() > saveLevel) {
+            retSection->pop_back();
+        }
+        if (saveLevel == retSection->size()) {
+            retSection->push_back(line.substr(start, end - start));
+        }
+        else {
+            return false;
+        }
     }
     s_stringJumpSpace(line, i);
     if (line[i] != '\0' && !s_isComment(line[i])) {
@@ -313,7 +319,7 @@ static bool s_parseKey(std::string line, std::list<std::string>* retKey, std::st
 
     s_stringJumpSpace(line, i);
     if (line[i] == '=') {
-        return false;    // not key element
+        return false; // not key element
     }
     // start key name
     if (line[i] == '\"' || line[i] == '\'') {
@@ -335,7 +341,7 @@ static bool s_parseKey(std::string line, std::list<std::string>* retKey, std::st
         ++i; // jump quote
         s_stringJumpSpace(line, i);
         if (line[i] != '=' && line[i] != '[') {
-            return false;    // not valid key
+            return false; // not valid key
         }
     }
     else {
@@ -380,7 +386,7 @@ static bool s_parseKey(std::string line, std::list<std::string>* retKey, std::st
             ++i; // jump quote
             s_stringJumpSpace(line, i);
             if (line[i] != ']') {
-                return false;    // not valid key
+                return false; // not valid key
             }
         }
         else {
@@ -430,7 +436,7 @@ static bool s_parseKey(std::string line, std::list<std::string>* retKey, std::st
         ++i; // jump quote
         s_stringJumpSpace(line, i);
         if (line[i] != '\0' && !s_isComment(line[i])) {
-            return false;    // not valid value
+            return false; // not valid value
         }
     }
     else {

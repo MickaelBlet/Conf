@@ -196,22 +196,52 @@ class Configator {
     };
 
     /**
-    * @brief Map exception
+    * @brief Config parse section exception
     */
-    class Exception : public std::exception {
+    class ExceptionParseSection : public std::exception {
 
       public:
         /**
-         * @brief Construct a new Exception object
+         * @brief Construct a new Exception Parse Section object
          *
-         * @param str : exception message
+         * @param str
          */
-        Exception(const char* str) throw();
+        ExceptionParseSection(const char* str) throw();
 
         /**
-         * @brief Destroy the Exception object
+         * @brief Destroy the Exception Parse Section object
          */
-        virtual ~Exception() throw();
+        virtual ~ExceptionParseSection() throw();
+
+        /**
+         * @brief get the exception message
+         *
+         * @return const char* : exception message
+         */
+        virtual const char* what() const throw();
+
+      private:
+        std::string _str;
+
+    };
+
+    /**
+    * @brief Config parse key exception
+    */
+    class ExceptionParseKey : public std::exception {
+
+      public:
+        /**
+         * @brief Construct a new Exception Parse Key object
+         *
+         * @param str
+         */
+        ExceptionParseKey(const char* str) throw();
+
+        /**
+         * @brief Destroy the Exception Parse Key object
+         */
+        virtual ~ExceptionParseKey() throw();
 
         /**
          * @brief get the exception message
