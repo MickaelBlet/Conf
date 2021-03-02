@@ -1,7 +1,10 @@
 COMPILER				:=	$(CXX)
-COMPILER_FLAG			:=	-std=c++98 -pedantic -fPIC -Wall -Wextra -Werror $(CPPFLAGS)
+COMPILER_FLAG			:=	-std=c++98 -pedantic -fPIC -Wall -Wextra -Werror $(CPPFLAGS) $(CXXFLAGS)
+
 INCLUDES				:=	-I../include
-LIVRARIES				:=	../lib/configator.a -lgtest -lgtest_main -lgmock -lpthread
+LIBRARIES_DEP			:=	../lib/configator.a
+LIVRARIES				:=	$(LIBRARIES_DEP) -lgtest -lgtest_main -lgmock -lpthread
+DEPENDANCIES			:=	..
 
 SOURCES_EXTENTION		:=	cpp
 
@@ -12,7 +15,8 @@ SOURCES					=	$(wildcard *.$(SOURCES_EXTENTION))
 OBJECTS					:=	$(addprefix $(BUILD_DIRECTORY)/,$(SOURCES:.$(SOURCES_EXTENTION)=.o))
 TESTS					:=	$(addprefix $(BINARY_DIRECTORY)/,$(SOURCES:.$(SOURCES_EXTENTION)=.gtest))
 
-all: $(TESTS)
+all: $(DEPENDANCIES)
+	$(MAKE) $(TESTS)
 
 clean:
 	$(RM) -r $(BUILD_DIRECTORY) $(BINARY_DIRECTORY)
@@ -20,7 +24,10 @@ clean:
 re: clean
 	$(MAKE) all
 
-.PHONY: all clean re
+$(DEPENDANCIES):
+	$(MAKE) -C $@
+
+.PHONY: all clean re $(DEPENDANCIES)
 
 $(BINARY_DIRECTORY):
 	mkdir -p $@
@@ -28,12 +35,13 @@ $(BINARY_DIRECTORY):
 $(BUILD_DIRECTORY):
 	mkdir -p $(sort $(dir $(OBJECTS)))
 
-$(BUILD_DIRECTORY)/%.o: %.$(SOURCES_EXTENTION) | $(BUILD_DIRECTORY)
+$(BUILD_DIRECTORY)/%.o: %.$(SOURCES_EXTENTION) $(LIBRARIES_DEP) | $(BUILD_DIRECTORY)
 	$(COMPILER) $(COMPILER_FLAG) -MMD -o $@ -c $< $(INCLUDES)
 
 $(BINARY_DIRECTORY)/%.gtest: $(BUILD_DIRECTORY)/%.o | $(BINARY_DIRECTORY)
 	$(COMPILER) $(COMPILER_FLAG) -o $@ $< $(LIVRARIES)
 
+#.PRIMARY: $(DEPENDANCIES)
 .SECONDARY: $(OBJECTS)
 
 -include $(OBJECTS:.o=.d)

@@ -42,7 +42,7 @@ GTEST_TEST(configurator_getFilename, test) {
                 << "[]" << "\n"
                 << "[[]]" << "\n"
                 << "test = 42   ;    yooo   "   << "\n"
-                << "[new]" << "\n"
+                << "[1][2][3]" << "\n"
                 << "test = 42   ;    yooo   "   << "\n";
     fileStream.close();
     mblet::Configator conf;

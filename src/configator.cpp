@@ -205,7 +205,104 @@ static bool s_emptyOrComment(const std::string& line, std::string* retComment) {
  * @return true
  * @return false
  */
-static bool s_parseSection(std::string line, std::list<std::string>* retSection, std::string* retComment) {
+static bool s_parseSections(std::string line, std::list<std::string>* retSection, std::string* retComment) {
+    char        quote;
+    std::size_t start;
+    std::size_t end;
+    std::size_t last;
+    std::size_t level = 0;
+    std::size_t i = 0;
+
+    s_stringJumpSpace(line, i);
+    // if not begin section
+    if (line[i] != '[') {
+        return false;
+    }
+    while (line[i] == '[') {
+        ++i; // jump character '['
+        ++level;
+        s_stringJumpSpace(line, i);
+        if (line[i] == '[') {
+            return false;
+        }
+        // start section name
+        if (line[i] == '\"' || line[i] == '\'') {
+            // get quote character
+            quote = line[i];
+            ++i; // jump quote
+            start = i;
+            // search end quote
+            while (line[i] != quote) {
+                if (line[i] == '\\') {
+                    line.erase(i, 1);
+                }
+                if (line[i] == '\0') {
+                    return false;
+                }
+                ++i;
+            }
+            end = i;
+            ++i; // jump quote
+            s_stringJumpSpace(line, i);
+        }
+        else {
+            start = i;
+            while (line[i] != ']') {
+                if (line[i] == '\0') {
+                    return false;
+                }
+                ++i;
+            }
+            last = i;
+            --i; // revert jump ']'
+            while (i > 0 && isspace(line[i])) {
+                --i;
+            }
+            ++i; // last character
+            end = i;
+            i = last;
+        }
+        if (line[i] != ']') {
+            return false;
+        }
+        ++i; // jump ]
+        if (level == 1) {
+            retSection->clear();
+        }
+        retSection->push_back(line.substr(start, end - start));
+        s_stringJumpSpace(line, i);
+    }
+    if (line[i] != '\0' && !s_isComment(line[i])) {
+        return false;
+    }
+    if (s_isComment(line[i])) {
+        ++i; // jump character ';' or '#'
+        s_stringJumpSpace(line, i);
+        start = i;
+        while (line[i] != '\0') {
+            ++i;
+        }
+        --i; // revert jump '\0'
+        while (i > 0 && isspace(line[i])) {
+            --i;
+        }
+        ++i; // last character
+        end = i;
+        *retComment = line.substr(start, end - start);
+    }
+    return true;
+}
+
+/**
+ * @brief parse section name
+ *
+ * @param line
+ * @param retSection
+ * @param retComment
+ * @return true
+ * @return false
+ */
+static bool s_parseSectionLevel(std::string line, std::list<std::string>* retSection, std::string* retComment) {
     char        quote;
     std::size_t start;
     std::size_t end;
@@ -224,7 +321,6 @@ static bool s_parseSection(std::string line, std::list<std::string>* retSection,
         ++level;
         s_stringJumpSpace(line, i);
     }
-
     // start section name
     if (line[i] == '\"' || line[i] == '\'') {
         // get quote character
@@ -271,21 +367,15 @@ static bool s_parseSection(std::string line, std::list<std::string>* retSection,
     if (level != 0) {
         return false;
     }
-    if (saveLevel == 1) {
-        retSection->clear();
+    --saveLevel;
+    while (retSection->size() > saveLevel) {
+        retSection->pop_back();
+    }
+    if (saveLevel == retSection->size()) {
         retSection->push_back(line.substr(start, end - start));
     }
     else {
-        --saveLevel;
-        while (retSection->size() > saveLevel) {
-            retSection->pop_back();
-        }
-        if (saveLevel == retSection->size()) {
-            retSection->push_back(line.substr(start, end - start));
-        }
-        else {
-            return false;
-        }
+        return false;
     }
     s_stringJumpSpace(line, i);
     if (line[i] != '\0' && !s_isComment(line[i])) {
@@ -498,7 +588,11 @@ void Configator::readStream(std::istream& stream) {
             }
             map.comment.append(comment);
         }
-        else if (s_parseSection(line, &sections, &comment)) {
+        else if (s_parseSections(line, &sections, &comment)) {
+            Configator::Map& map = s_section(_mapConfig, sections);
+            map.comment = comment;
+        }
+        else if (s_parseSectionLevel(line, &sections, &comment)) {
             Configator::Map& map = s_section(_mapConfig, sections);
             map.comment = comment;
         }
