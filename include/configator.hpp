@@ -48,36 +48,6 @@ class Configator {
 
       public:
         /**
-         * @brief Map exception
-         */
-        class Exception : public std::exception {
-
-          public:
-            /**
-             * @brief Construct a new Exception object
-             *
-             * @param str : exception message
-             */
-            Exception(const char* str) throw();
-
-            /**
-             * @brief Destroy the Exception object
-             */
-            virtual ~Exception() throw();
-
-            /**
-             * @brief get the exception message
-             *
-             * @return const char* : exception message
-             */
-            virtual const char* what() const throw();
-
-          private:
-            std::string _str;
-
-        };
-
-        /**
          * @brief overide operator stream for print value
          *
          * @param os
@@ -190,68 +160,9 @@ class Configator {
         std::string value;
 
       private:
+        static Map _emptyMap;
 
         void valueToStream(std::ostream& stringStream) const;
-
-    };
-
-    /**
-    * @brief Config parse section exception
-    */
-    class ExceptionParseSection : public std::exception {
-
-      public:
-        /**
-         * @brief Construct a new Exception Parse Section object
-         *
-         * @param str
-         */
-        ExceptionParseSection(const char* str) throw();
-
-        /**
-         * @brief Destroy the Exception Parse Section object
-         */
-        virtual ~ExceptionParseSection() throw();
-
-        /**
-         * @brief get the exception message
-         *
-         * @return const char* : exception message
-         */
-        virtual const char* what() const throw();
-
-      private:
-        std::string _str;
-
-    };
-
-    /**
-    * @brief Config parse key exception
-    */
-    class ExceptionParseKey : public std::exception {
-
-      public:
-        /**
-         * @brief Construct a new Exception Parse Key object
-         *
-         * @param str
-         */
-        ExceptionParseKey(const char* str) throw();
-
-        /**
-         * @brief Destroy the Exception Parse Key object
-         */
-        virtual ~ExceptionParseKey() throw();
-
-        /**
-         * @brief get the exception message
-         *
-         * @return const char* : exception message
-         */
-        virtual const char* what() const throw();
-
-      private:
-        std::string _str;
 
     };
 
@@ -265,7 +176,7 @@ class Configator {
      *
      * @param filename
      */
-    Configator(const std::string& filename);
+    Configator(const char* filename);
 
     /**
      * @brief Construct a new Configator object
@@ -294,7 +205,7 @@ class Configator {
      * @return true
      * @return false
      */
-    bool readFile(const std::string& filename);
+    bool readFile(const char* filename);
 
     /**
      * @brief Get the Filename object
@@ -324,22 +235,6 @@ class Configator {
      * @return const Map& : all mac config
      */
     const Map& getConfig() const;
-
-    /**
-     * @brief overide operator for get map from index
-     *
-     * @param index : at index
-     * @return Map& : map from index
-     */
-    Map& operator[](std::size_t index);
-
-    /**
-     * @brief overide operator for get map from string
-     *
-     * @param str : at str
-     * @return Map& : map from string
-     */
-    Map& operator[](const std::string& str);
 
     /**
      * @brief overide operator for get const map from index

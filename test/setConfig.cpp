@@ -12,13 +12,13 @@ GTEST_TEST(configurator_setConfig, success) {
     fileStream.close();
     mblet::Configator conf;
     EXPECT_EQ(conf.readFile(testFile), true);
+    // remove exmaple file
     remove(testFile);
     EXPECT_EQ(conf.isRead(), true);
-}
-
-GTEST_TEST(configurator_setConfig, failure) {
-    const char* testFile = "test.ini";
-    mblet::Configator conf;
-    EXPECT_EQ(conf.readFile(testFile), false);
-    EXPECT_EQ(conf.isRead(), false);
+    EXPECT_EQ(conf.getConfig().size(), 1);
+    EXPECT_EQ(conf["test"]["42"]["42"].value, "42");
+    // clean configuration map
+    mblet::Configator::Map newMap;
+    conf.setConfig(newMap);
+    EXPECT_EQ(conf.getConfig().size(), 0);
 }

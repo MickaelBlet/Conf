@@ -36,7 +36,7 @@ Configator::Configator():
     return ;
 }
 
-Configator::Configator(const std::string& filename):
+Configator::Configator(const char* filename):
     _mapConfig(Configator::Map()),
     _filename(std::string()),
     _isRead(false) {
@@ -62,28 +62,20 @@ Configator& Configator::operator=(const Configator& rhs) {
     return *this;
 }
 
-Configator::Map& Configator::operator[](std::size_t index) {
-    return _mapConfig[index];
-}
-
 const Configator::Map& Configator::operator[](std::size_t index) const {
     return _mapConfig[index];
-}
-
-Configator::Map& Configator::operator[](const std::string& str) {
-    return _mapConfig[str];
 }
 
 const Configator::Map& Configator::operator[](const std::string& str) const {
     return _mapConfig[str];
 }
 
-bool Configator::readFile(const std::string& filename) {
+bool Configator::readFile(const char* filename) {
     _mapConfig.clear();
     _filename = "";
     _isRead   = false;
 
-    std::ifstream fileStream(filename.c_str()); // open file
+    std::ifstream fileStream(filename); // open file
     if (fileStream.is_open()) {
         _filename = filename;
         _isRead   = true;
@@ -573,8 +565,9 @@ static Configator::Map& s_section(Configator::Map& map, const std::list<std::str
 }
 
 void Configator::readStream(std::istream& stream) {
+    std::string line("");
     std::list<std::string> sections;
-    std::string line    = "";
+    sections.push_back("");
 
     while (std::getline(stream, line)) {
         std::list<std::string> keys;

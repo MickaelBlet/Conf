@@ -7,8 +7,6 @@ GTEST_TEST(configurator_isRead, success) {
     const char* testFile = "test.ini";
     // create example file
     std::ofstream fileStream(testFile, std::ofstream::out | std::ofstream::trunc);
-    fileStream << "[test]\n"
-               << "42[42]=42";
     fileStream.close();
     mblet::Configator conf;
     EXPECT_EQ(conf.readFile(testFile), true);

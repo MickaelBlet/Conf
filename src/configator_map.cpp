@@ -27,6 +27,8 @@
 
 namespace mblet {
 
+Configator::Map Configator::Map::_emptyMap = Configator::Map();
+
 std::ostream& operator<<(std::ostream& os, const Configator::Map& map) {
     os << map.value;
     return os;
@@ -73,7 +75,7 @@ const Configator::Map& Configator::Map::operator[](const std::string& str) const
     if (it != this->end()) {
         return it->second;
     }
-    throw Map::Exception("key not found");
+    return _emptyMap;
 }
 
 Configator::Map::iterator Configator::Map::find(const std::string& str) {

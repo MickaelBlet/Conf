@@ -75,6 +75,8 @@ $ cat ./test4.ini
 2=0x42   ;hex
 3=0b0101 ;binary
 4=042    ;octal
+[grandmother][mother][child]
+5=42
 ```
 ```cpp
 mblet::Configator conf("./test4.ini");
@@ -83,7 +85,7 @@ std::cout << conf["grandfather"]["father"]["child"]["1"].get<int>() << std::endl
 std::cout << conf["grandfather"]["father"]["child"]["2"].get<int>() << std::endl;
 std::cout << conf["grandfather"]["father"]["child"]["3"].get<int>() << std::endl;
 std::cout << conf["grandfather"]["father"]["child"]["4"].get<int>() << std::endl;
-std::cout << conf["grandfather"]["father"]["child"]["5"].get<int>(42) << std::endl; // take default key
+std::cout << conf["grandmother"]["mother"]["child"]["5"].get<int>() << std::endl;
 // output:
 // 1
 // -42

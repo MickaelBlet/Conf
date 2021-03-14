@@ -3,7 +3,7 @@ STATIC_LIBRARY_NAME		:=	$(NAME).a
 DYNAMIC_LIBRARY_NAME	:=	lib$(NAME).so
 
 COMPILER				:=	$(CXX)
-COMPILER_FLAG			:=	-std=c++98 -pedantic -fPIC -Wall -Wextra -Werror $(CPPFLAGS)
+COMPILER_FLAG			:=	-std=c++98 -pedantic -fPIC -Wall -Wextra -Werror $(CFLAGS) $(CPPFLAGS) $(CXXFLAGS)
 INCLUDES				:=	-I./include
 LIVRARIES				:=
 
@@ -32,7 +32,7 @@ $(LIBRARY_DIRECTORY):
 	mkdir -p $@
 
 $(LIBRARY_DIRECTORY)/$(STATIC_LIBRARY_NAME): $(OBJECTS) | $(LIBRARY_DIRECTORY)
-	ar rc $@ $^
+	$(AR) rc $@ $^
 
 $(LIBRARY_DIRECTORY)/$(DYNAMIC_LIBRARY_NAME): $(OBJECTS) | $(LIBRARY_DIRECTORY)
 	$(COMPILER) -shared -o $@ $^
