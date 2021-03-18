@@ -1,5 +1,5 @@
 COMPILER				:=	$(CXX)
-COMPILER_FLAG			:=	-std=c++98 -pedantic -fPIC -Wall -Wextra -Werror $(CPPFLAGS) $(CXXFLAGS)
+COMPILER_FLAG			:=	-std=c++98 -pedantic -fPIC -Wall -Wextra -Werror $(CFLAGS) $(CPPFLAGS) $(CXXFLAGS)
 
 INCLUDES				:=	-I../include
 LIBRARIES_DEP			:=	../lib/configator.a
@@ -8,12 +8,13 @@ DEPENDANCIES			:=	..
 
 SOURCES_EXTENTION		:=	cpp
 
+SOURCE_DIRECTORY		:=	.
 BUILD_DIRECTORY			:=	./build
 BINARY_DIRECTORY		:=	./bin
 
-SOURCES					=	$(wildcard *.$(SOURCES_EXTENTION))
-OBJECTS					:=	$(addprefix $(BUILD_DIRECTORY)/,$(SOURCES:.$(SOURCES_EXTENTION)=.o))
-TESTS					:=	$(addprefix $(BINARY_DIRECTORY)/,$(SOURCES:.$(SOURCES_EXTENTION)=.gtest))
+SOURCES					=	$(shell find $(SOURCE_DIRECTORY) -type f -name "*.$(SOURCES_EXTENTION)")
+OBJECTS					:=	$(patsubst $(SOURCE_DIRECTORY)/%,$(BUILD_DIRECTORY)/%,$(SOURCES:.$(SOURCES_EXTENTION)=.o))
+TESTS					:=	$(patsubst $(SOURCE_DIRECTORY)/%,$(BINARY_DIRECTORY)/%,$(SOURCES:.$(SOURCES_EXTENTION)=.gtest))
 
 all: $(DEPENDANCIES)
 	$(MAKE) $(TESTS)

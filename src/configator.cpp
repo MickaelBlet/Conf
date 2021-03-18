@@ -391,6 +391,16 @@ static bool s_parseSectionLevel(std::string line, std::list<std::string>* retSec
     return true;
 }
 
+/**
+ * @brief parse key
+ *
+ * @param line
+ * @param retKey
+ * @param retValue
+ * @param retComment
+ * @return true
+ * @return false
+ */
 static bool s_parseKey(std::string line, std::list<std::string>* retKey, std::string* retValue,
                        std::string* retComment) {
     char        quote;
@@ -554,6 +564,13 @@ static bool s_parseKey(std::string line, std::list<std::string>* retKey, std::st
     return true;
 }
 
+/**
+ * @brief get map of section
+ *
+ * @param map
+ * @param sections
+ * @return Configator::Map&
+ */
 static Configator::Map& s_section(Configator::Map& map, const std::list<std::string>& sections) {
     std::list<std::string>::const_iterator itSection;
 
