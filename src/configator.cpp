@@ -105,23 +105,84 @@ bool Configator::isRead() const {
 // =============================================================================
 // dump
 
-static void s_recurseDump(std::ostream& oss, const Configator::Map& map, std::size_t indent, std::size_t tab = 0) {
-    Configator::Map::const_iterator itSection;
+static void s_printCommentDump(std::ostream& oss, const std::string& str) {
+    if (!str.empty()) {
+        oss << " ; " << str;
+    }
+}
 
+static void s_printDump(std::ostream& oss, const std::string& str) {
+    unsigned int i;
+    for (i = 0; i < str.size(); ++i) {
+        if (str[i] == ' ' || str[i] == '"' || str[i] == '#' || str[i] == ';' || str[i] == '\\' || str[i] == '['
+            || str[i] == ']') {
+            break;
+        }
+    }
+    if (i < str.size()) {
+        oss << '"';
+        for (i = 0; i < str.size(); ++i) {
+            if (str[i] == '"' || str[i] == '\\') {
+                oss << '\\' << str[i];
+            }
+            else {
+                oss << str[i];
+            }
+        }
+        oss << '"';
+    }
+    else {
+        oss << str;
+    }
+}
+
+static void s_sectionCommentDump(std::ostream& oss, const std::string& str) {
+    if (!str.empty()) {
+        oss << "; ";
+        unsigned int i;
+        for (i = 0; i < str.size(); ++i) {
+            oss << str[i];
+            if (str[i] == '\n') {
+                oss << "; ";
+            }
+        }
+        oss << '\n';
+    }
+}
+
+static void s_sectionDump(std::ostream& oss, const std::string& str, std::size_t sectionIndex) {
+    oss << std::string(sectionIndex + 1, '[');
+    s_printDump(oss, str);
+    oss << std::string(sectionIndex + 1, ']');
+}
+
+static void s_recurseDump(std::ostream& oss, const Configator::Map& map, std::size_t sectionIndex = 0) {
+    Configator::Map::const_iterator itSection;
     for (itSection = map.begin(); itSection != map.end(); ++itSection) {
-        oss << std::string(tab * indent, ' ') << itSection->first << ':';
         if (itSection->second.size() > 0) {
-            oss << std::endl;
-            s_recurseDump(oss, itSection->second, indent, tab + 1);
+            if (!itSection->second.value.empty()) {
+                s_printDump(oss, itSection->first);
+                oss << " = ";
+                s_printDump(oss, itSection->second.value);
+                oss << '\n';
+            }
+            s_sectionDump(oss, itSection->first, sectionIndex);
+            oss << '\n';
+            s_sectionCommentDump(oss, itSection->second.comment);
+            s_recurseDump(oss, itSection->second, sectionIndex + 1);
         }
         else {
-            oss << ' ' << itSection->second << std::endl;
+            s_printDump(oss, itSection->first);
+            oss << " = ";
+            s_printDump(oss, itSection->second.value);
+            s_printCommentDump(oss, itSection->second.comment);
+            oss << '\n';
         }
     }
 }
 
-std::ostream& Configator::dump(std::ostream& oss, std::size_t indent) const {
-    s_recurseDump(oss, _mapConfig, indent);
+std::ostream& Configator::dump(std::ostream& oss) const {
+    s_recurseDump(oss, _mapConfig);
     return oss;
 }
 
@@ -265,6 +326,7 @@ static bool s_parseSections(std::string line, std::list<std::string>* retSection
         s_stringJumpSpace(line, i);
     }
     if (line[i] != '\0' && !s_isComment(line[i])) {
+        retSection->pop_back();
         return false;
     }
     if (s_isComment(line[i])) {

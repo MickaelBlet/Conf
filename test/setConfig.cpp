@@ -3,7 +3,7 @@
 
 #include "configator.hpp"
 
-GTEST_TEST(configurator_setConfig, success) {
+GTEST_TEST(configator_setConfig, success) {
     const char* testFile = "test.ini";
     // create example file
     std::ofstream fileStream(testFile, std::ofstream::out | std::ofstream::trunc);

@@ -3,8 +3,8 @@
 
 #include "configator.hpp"
 
-GTEST_TEST(configurator, test1) {
-    const char *testFile = "test.ini";
+GTEST_TEST(configator, test1) {
+    const char* testFile = "test.ini";
     // create example file
     std::ofstream fileStream(testFile, std::ofstream::out | std::ofstream::trunc);
     fileStream << "[test]" << '\n'
@@ -20,8 +20,8 @@ GTEST_TEST(configurator, test1) {
     EXPECT_EQ(conf["test"]["42"].value, "-42.42");
 }
 
-GTEST_TEST(configurator, test2) {
-    const char *testFile = "test.ini";
+GTEST_TEST(configator, test2) {
+    const char* testFile = "test.ini";
     // create example file
     std::ofstream fileStream(testFile, std::ofstream::out | std::ofstream::trunc);
     fileStream << "[test]" << '\n'
@@ -46,8 +46,8 @@ GTEST_TEST(configurator, test2) {
     EXPECT_EQ(conf["test"]["5"].get<int>(42), 42);
 }
 
-GTEST_TEST(configurator, test3) {
-    const char *testFile = "test.ini";
+GTEST_TEST(configator, test3) {
+    const char* testFile = "test.ini";
     // create example file
     std::ofstream fileStream(testFile, std::ofstream::out | std::ofstream::trunc);
     fileStream << "[    test     ]    ; commment line" << '\n'
@@ -69,8 +69,8 @@ GTEST_TEST(configurator, test3) {
     EXPECT_EQ(conf["test"]["map"]["key1"]["key2"].value, "value2");
 }
 
-GTEST_TEST(configurator, test4) {
-    const char *testFile = "test.ini";
+GTEST_TEST(configator, test4) {
+    const char* testFile = "test.ini";
     // create example file
     std::ofstream fileStream(testFile, std::ofstream::out | std::ofstream::trunc);
     fileStream << "[ grandfather ]  ; commment line" << '\n'
@@ -99,8 +99,8 @@ GTEST_TEST(configurator, test4) {
     EXPECT_EQ(conf["grandmother"]["mother"]["child"]["5"].get<int>(), 42);
 }
 
-GTEST_TEST(configurator, test5) {
-    const char *testFile = "test.ini";
+GTEST_TEST(configator, test5) {
+    const char* testFile = "test.ini";
     // create example file
     std::ofstream fileStream(testFile, std::ofstream::out | std::ofstream::trunc);
     fileStream << "[test]" << '\n'

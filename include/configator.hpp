@@ -258,7 +258,7 @@ class Configator {
      * @param indent
      * @return std::string
      */
-    std::ostream& dump(std::ostream& oss = std::cout, std::size_t indent = 4) const;
+    std::ostream& dump(std::ostream& oss = std::cout) const;
 
   protected:
     Map         _mapConfig;
