@@ -2,7 +2,7 @@ COMPILER				:=	$(CXX)
 COMPILER_FLAG			:=	-std=c++98 -pedantic -fPIC -Wall -Wextra -Werror $(CFLAGS) $(CPPFLAGS) $(CXXFLAGS)
 
 INCLUDES				:=	-I../include
-LIBRARIES_DEP			:=	../lib/configator.a
+LIBRARIES_DEP			:=	../lib/libconfigator.so
 LIVRARIES				:=	$(LIBRARIES_DEP) -lgtest -lgtest_main -lgmock -lpthread
 DEPENDANCIES			:=	..
 

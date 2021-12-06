@@ -286,7 +286,7 @@ static bool s_parseSections(std::string line, std::list<std::string>* retSection
             start = i;
             // search end quote
             while (line[i] != quote) {
-                if (line[i] == '\\') {
+                if (line[i] == '\\' && (line[i + 1] == quote || line[i + 1] == '\\')) {
                     line.erase(i, 1);
                 }
                 if (line[i] == '\0') {
@@ -383,7 +383,7 @@ static bool s_parseSectionLevel(std::string line, std::list<std::string>* retSec
         start = i;
         // search end quote
         while (line[i] != quote) {
-            if (line[i] == '\\') {
+            if (line[i] == '\\' && (line[i + 1] == quote || line[i + 1] == '\\')) {
                 line.erase(i, 1);
             }
             if (line[i] == '\0') {
@@ -483,7 +483,7 @@ static bool s_parseKey(std::string line, std::list<std::string>* retKey, std::st
         start = i;
         // search end quote
         while (line[i] != quote) {
-            if (line[i] == '\\') {
+            if (line[i] == '\\' && (line[i + 1] == quote || line[i + 1] == '\\')) {
                 line.erase(i, 1);
             }
             if (line[i] == '\0') {
@@ -528,7 +528,7 @@ static bool s_parseKey(std::string line, std::list<std::string>* retKey, std::st
             start = i;
             // search end quote
             while (line[i] != quote) {
-                if (line[i] == '\\') {
+                if (line[i] == '\\' && (line[i + 1] == quote || line[i + 1] == '\\')) {
                     line.erase(i, 1);
                 }
                 if (line[i] == '\0') {
@@ -578,7 +578,7 @@ static bool s_parseKey(std::string line, std::list<std::string>* retKey, std::st
         start = i;
         // search end quote
         while (line[i] != quote) {
-            if (line[i] == '\\') {
+            if (line[i] == '\\' && (line[i + 1] == quote || line[i + 1] == '\\')) {
                 line.erase(i, 1);
             }
             if (line[i] == '\0') {

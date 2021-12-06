@@ -96,7 +96,7 @@ GTEST_TEST(configator, test4) {
     EXPECT_EQ(conf["grandfather"]["father"]["child"]["2"].get<int>(), 66);
     EXPECT_EQ(conf["grandfather"]["father"]["child"]["3"].get<int>(), 5);
     EXPECT_EQ(conf["grandfather"]["father"]["child"]["4"].get<int>(), 34);
-    EXPECT_EQ(conf["grandmother"]["mother"]["child"]["5"].get<int>(), 42);
+    EXPECT_EQ(conf["grandmother"]["mother"]["child"]["5"].get<std::string>(), "42");
 }
 
 GTEST_TEST(configator, test5) {
@@ -104,7 +104,7 @@ GTEST_TEST(configator, test5) {
     // create example file
     std::ofstream fileStream(testFile, std::ofstream::out | std::ofstream::trunc);
     fileStream << "[test]" << '\n'
-               << "\"32[\\\\]\"      =     '\"2 ;\"#\\'## i\\\\' # test with comment in line" << '\n'
+               << "\"32[\\]\"      =     '\"2 ;\"#\\'## i\\\\' # test with comment in line" << '\n'
                << "42     [\"key[]\"]      =     \"value\" ; comment line" << '\n'
                << "'42 space  ' [\"key[]\"]      =     \" value space \" ; comment line" << '\n';
     fileStream.close();
