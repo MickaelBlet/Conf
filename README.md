@@ -2,6 +2,12 @@
 
 ini reader for c++
 
+## Build
+```
+mkdir build ; cd build ; cmake .. && make
+```
+
+## Examples
 ### Access by map
 ```ini
 $ cat ./test1.ini

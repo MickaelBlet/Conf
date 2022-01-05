@@ -3,7 +3,7 @@
 
 #include "configator.hpp"
 
-GTEST_TEST(configator_isRead, success) {
+GTEST_TEST(isRead, success) {
     const char* testFile = "test.ini";
     // create example file
     std::ofstream fileStream(testFile, std::ofstream::out | std::ofstream::trunc);
@@ -14,7 +14,7 @@ GTEST_TEST(configator_isRead, success) {
     EXPECT_EQ(conf.isRead(), true);
 }
 
-GTEST_TEST(configator_isRead, failure) {
+GTEST_TEST(isRead, failure) {
     const char* testFile = "test.ini";
     mblet::Configator conf;
     EXPECT_EQ(conf.readFile(testFile), false);
