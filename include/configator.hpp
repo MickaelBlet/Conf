@@ -2,7 +2,7 @@
  * configator.hpp
  *
  * Licensed under the MIT License <http://opensource.org/licenses/MIT>.
- * Copyright (c) 2020 BLET Mickaël.
+ * Copyright (c) 2022 BLET Mickaël.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -29,9 +29,10 @@
 # include <iostream>
 # include <sstream>
 # include <fstream>
-# include <vector>
+# include <map>
 
-# include <stdlib.h>
+# include <cstdio>
+# include <cstdlib>
 
 namespace mblet {
 
@@ -44,7 +45,7 @@ class Configator {
     /**
      * @brief Container map by index
      */
-    class Map : public std::vector<std::pair<std::string, Map> > {
+    class Map : public std::map<std::string, Map> {
 
       public:
         /**
@@ -54,7 +55,10 @@ class Configator {
          * @param map
          * @return std::ostream&
          */
-        friend std::ostream& operator<<(std::ostream& os, const Map& map);
+        inline friend std::ostream& operator<<(std::ostream& os, const Map& map) {
+            os << map.value;
+            return os;
+        }
 
         /**
          * @brief Construct a new Map object
@@ -66,7 +70,9 @@ class Configator {
          *
          * @param str : new value
          */
-        void operator=(const std::string& str);
+        inline void operator=(const std::string& str) {
+            value = str;
+        }
 
         /**
          * @brief overide operator for get map from index
@@ -74,7 +80,11 @@ class Configator {
          * @param index : at index
          * @return Map& : map from index
          */
-        Map& operator[](std::size_t index);
+        inline Map& operator[](unsigned long index) {
+            char str[64];
+            snprintf(str, sizeof(str), "%lu", index);
+            return this->operator[](str);
+        }
 
         /**
          * @brief overide operator for get const map from index
@@ -82,7 +92,11 @@ class Configator {
          * @param index : at index
          * @return const Map& : map from index
          */
-        const Map& operator[](std::size_t index) const;
+        inline const Map& operator[](unsigned long index) const {
+            char str[64];
+            snprintf(str, sizeof(str), "%lu", index);
+            return this->operator[](str);
+        }
 
         /**
          * @brief overide operator for get map from string
@@ -90,7 +104,14 @@ class Configator {
          * @param str : at string
          * @return Map& : map from string
          */
-        Map& operator[](const std::string& str);
+        inline Map& operator[](const std::string& str) {
+            Configator::Map::iterator it = this->find(str);
+            if (it != this->end()) {
+                return it->second;
+            }
+            this->insert(std::pair<std::string, Map>(str, Map()));
+            return this->at(str);
+        }
 
         /**
          * @brief overide operator for get const map from string
@@ -98,23 +119,13 @@ class Configator {
          * @param str : search string
          * @return const Map& : map from string
          */
-        const Map& operator[](const std::string& str) const;
-
-        /**
-         * @brief find from string
-         *
-         * @param str : search string
-         * @return Map::iterator : read/write iterator at find element
-         */
-        Map::iterator find(const std::string& str);
-
-        /**
-         * @brief find from string
-         *
-         * @param str : search string
-         * @return Map::const_iterator : read-only iterator at find element
-         */
-        Map::const_iterator find(const std::string& str) const;
+        inline const Map& operator[](const std::string& str) const {
+            Map::const_iterator it = find(str);
+            if (it != this->end()) {
+                return it->second;
+            }
+            return _emptyMap;
+        }
 
         /**
          * @brief get value
@@ -207,12 +218,23 @@ class Configator {
      */
     bool readFile(const char* filename);
 
+    inline void readStream(std::istream& stream) {
+        parseStream(stream);
+    }
+
+    inline void readString(const std::string& str) {
+        std::istringstream istr(str);
+        parseStream(istr);
+    }
+
     /**
      * @brief Get the Filename object
      *
      * @return std::string : copy of filename
      */
-    const std::string& getFilename() const;
+    inline const std::string& getFilename() const {
+        return _filename;
+    }
 
     /**
      * @brief Check if file is read
@@ -220,21 +242,28 @@ class Configator {
      * @return true : file is read
      * @return false : file is not read
      */
-    bool isRead() const;
+    inline bool isRead() const {
+        return _isRead;
+    }
 
     /**
      * @brief Set the Config object
      *
      * @param mapConfig
      */
-    void setConfig(const Map& mapConfig);
+    inline void setConfig(const Map& mapConfig) {
+        _mapConfig.clear();
+        _mapConfig = mapConfig;
+    }
 
     /**
      * @brief Get the Config object
      *
      * @return const Map& : all mac config
      */
-    const Map& getConfig() const;
+    inline const Map& getConfig() const {
+        return _mapConfig;
+    }
 
     /**
      * @brief overide operator for get const map from index
@@ -242,7 +271,9 @@ class Configator {
      * @param index : at index
      * @return Map& : map from index
      */
-    const Map& operator[](std::size_t index) const;
+    inline const Map& operator[](std::size_t index) const {
+        return _mapConfig[index];
+    }
 
     /**
      * @brief overide operator for get const map from string
@@ -250,7 +281,9 @@ class Configator {
      * @param str : at str
      * @return Map& : map from string
      */
-    const Map& operator[](const std::string& str) const;
+    inline const Map& operator[](const std::string& str) const {
+        return _mapConfig[str];
+    }
 
     /**
      * @brief dump in string the map
@@ -271,7 +304,7 @@ class Configator {
      *
      * @param stream
      */
-    void readStream(std::istream& stream);
+    void parseStream(std::istream& stream);
 
 }; // class Configator
 

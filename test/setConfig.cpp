@@ -4,18 +4,14 @@
 #include "configator.hpp"
 
 GTEST_TEST(setConfig, success) {
-    const char* testFile = "test.ini";
-    // create example file
-    std::ofstream fileStream(testFile, std::ofstream::out | std::ofstream::trunc);
-    fileStream << "[test]\n"
-               << "42[42]=42";
-    fileStream.close();
+    // create example string
+    std::string strConf("[unused]\n" \
+                        "[test]\n" \
+                        "42[42]=42");
+
     mblet::Configator conf;
-    EXPECT_EQ(conf.readFile(testFile), true);
-    // remove example file
-    remove(testFile);
-    EXPECT_EQ(conf.isRead(), true);
-    EXPECT_EQ(conf.getConfig().size(), 1);
+    conf.readString(strConf);
+    EXPECT_EQ(conf.getConfig().size(), 2); // two sections
     EXPECT_EQ(conf["test"]["42"]["42"].value, "42");
     // clean configuration map
     mblet::Configator::Map newMap;

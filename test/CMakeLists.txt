@@ -1,12 +1,8 @@
 cmake_minimum_required(VERSION 2.6)
 
-if(NOT "${PROJECT_NAME}" STREQUAL "configator")
-    enable_testing()
-    project(configator_test CXX)
-    find_package(configator REQUIRED)
-else()
-    project(configator_test CXX)
-endif()
+enable_testing()
+
+project(configator_test CXX)
 
 include_directories(
     "${CMAKE_CURRENT_SOURCE_DIR}/include"
@@ -22,6 +18,7 @@ foreach(file ${test_files})
             CXX_STANDARD 98
             CXX_STANDARD_REQUIRED ON
             CXX_EXTENSIONS OFF
+            NO_SYSTEM_FROM_IMPORTED ON
     )
     target_compile_options("configator_${filenamewe}.gtest" PRIVATE -pedantic -Wall -Wextra -Werror)
     target_link_libraries("configator_${filenamewe}.gtest" gtest_main gmock pthread)

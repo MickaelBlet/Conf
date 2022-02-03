@@ -3,8 +3,11 @@
 ini reader for c++
 
 ## Build
-```
-mkdir build ; cd build ; cmake .. && make
+```bash
+# build
+mkdir build ; pushd build && cmake .. && make -j && popd
+# build and launch test
+mkdir build ; pushd build && cmake -DBUILD_TESTING=1 .. && make -j && make test && popd
 ```
 
 ## Examples

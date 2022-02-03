@@ -2,7 +2,7 @@
  * configator_map.cpp
  *
  * Licensed under the MIT License <http://opensource.org/licenses/MIT>.
- * Copyright (c) 2020 BLET Mickaël.
+ * Copyright (c) 2022 BLET Mickaël.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -29,73 +29,11 @@ namespace mblet {
 
 Configator::Map Configator::Map::_emptyMap = Configator::Map();
 
-std::ostream& operator<<(std::ostream& os, const Configator::Map& map) {
-    os << map.value;
-    return os;
-}
-
 Configator::Map::Map():
-    std::vector<std::pair<std::string, Map> >(),
+    std::map<std::string, Map>(),
     comment(std::string()),
     value(std::string()) {
     return ;
-}
-
-void Configator::Map::operator=(const std::string& str) {
-    value = str;
-}
-
-Configator::Map& Configator::Map::operator[](std::size_t index) {
-    if (index < this->size()) {
-        return this->at(index).second;
-    }
-    for (std::size_t i = this->size(); i < index + 1; ++i) {
-        std::ostringstream oss("");
-        oss << this->size();
-        this->push_back(std::pair<std::string, Map>(oss.str(), Map()));
-    }
-    return this->at(index).second;
-}
-
-const Configator::Map& Configator::Map::operator[](std::size_t index) const {
-    return this->at(index).second;
-}
-
-Configator::Map& Configator::Map::operator[](const std::string& str) {
-    Configator::Map::iterator it = find(str);
-    if (it != this->end()) {
-        return it->second;
-    }
-    this->push_back(std::pair<std::string, Map>(str, Map()));
-    return this->back().second;
-}
-
-const Configator::Map& Configator::Map::operator[](const std::string& str) const {
-    Configator::Map::const_iterator it = find(str);
-    if (it != this->end()) {
-        return it->second;
-    }
-    return _emptyMap;
-}
-
-Configator::Map::iterator Configator::Map::find(const std::string& str) {
-    Configator::Map::iterator it;
-    for (it = this->begin() ; it != this->end() ; ++it) {
-        if (str == it->first) {
-            break;
-        }
-    }
-    return it;
-}
-
-Configator::Map::const_iterator Configator::Map::find(const std::string& str) const {
-    Configator::Map::const_iterator it;
-    for (it = this->begin() ; it != this->end() ; ++it) {
-        if (str == it->first) {
-            break;
-        }
-    }
-    return it;
 }
 
 void Configator::Map::valueToStream(std::ostream& stringStream) const {

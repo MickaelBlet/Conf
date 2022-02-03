@@ -2,7 +2,7 @@
  * configator.cpp
  *
  * Licensed under the MIT License <http://opensource.org/licenses/MIT>.
- * Copyright (c) 2020 BLET Mickaël.
+ * Copyright (c) 2022 BLET Mickaël.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -62,14 +62,6 @@ Configator& Configator::operator=(const Configator& rhs) {
     return *this;
 }
 
-const Configator::Map& Configator::operator[](std::size_t index) const {
-    return _mapConfig[index];
-}
-
-const Configator::Map& Configator::operator[](const std::string& str) const {
-    return _mapConfig[str];
-}
-
 bool Configator::readFile(const char* filename) {
     _mapConfig.clear();
     _filename = "";
@@ -79,39 +71,22 @@ bool Configator::readFile(const char* filename) {
     if (fileStream.is_open()) {
         _filename = filename;
         _isRead   = true;
-        readStream(fileStream); // parse file
+        parseStream(fileStream); // parse file
         fileStream.close();
     }
-    return _isRead;
-}
-
-void Configator::setConfig(const Configator::Map& mapConfig) {
-    _mapConfig.clear();
-    _mapConfig = mapConfig;
-}
-
-const Configator::Map& Configator::getConfig() const {
-    return _mapConfig;
-}
-
-const std::string& Configator::getFilename() const {
-    return _filename;
-}
-
-bool Configator::isRead() const {
     return _isRead;
 }
 
 // =============================================================================
 // dump
 
-static void s_printCommentDump(std::ostream& oss, const std::string& str) {
+static inline void s_printCommentDump(std::ostream& oss, const std::string& str) {
     if (!str.empty()) {
         oss << " ; " << str;
     }
 }
 
-static void s_printDump(std::ostream& oss, const std::string& str) {
+static inline void s_printDump(std::ostream& oss, const std::string& str) {
     unsigned int i;
     for (i = 0; i < str.size(); ++i) {
         if (str[i] == ' ' || str[i] == '"' || str[i] == '#' || str[i] == ';' || str[i] == '\\' || str[i] == '['
@@ -136,7 +111,7 @@ static void s_printDump(std::ostream& oss, const std::string& str) {
     }
 }
 
-static void s_sectionCommentDump(std::ostream& oss, const std::string& str) {
+static inline void s_sectionCommentDump(std::ostream& oss, const std::string& str) {
     if (!str.empty()) {
         oss << "; ";
         unsigned int i;
@@ -150,13 +125,13 @@ static void s_sectionCommentDump(std::ostream& oss, const std::string& str) {
     }
 }
 
-static void s_sectionDump(std::ostream& oss, const std::string& str, std::size_t sectionIndex) {
+static inline void s_sectionDump(std::ostream& oss, const std::string& str, std::size_t sectionIndex) {
     oss << std::string(sectionIndex + 1, '[');
     s_printDump(oss, str);
     oss << std::string(sectionIndex + 1, ']');
 }
 
-static void s_recurseDump(std::ostream& oss, const Configator::Map& map, std::size_t sectionIndex = 0) {
+static inline void s_recurseDump(std::ostream& oss, const Configator::Map& map, std::size_t sectionIndex = 0) {
     Configator::Map::const_iterator itSection;
     for (itSection = map.begin(); itSection != map.end(); ++itSection) {
         if (itSection->second.size() > 0) {
@@ -196,7 +171,7 @@ std::ostream& Configator::dump(std::ostream& oss) const {
  * @return true : c is comment character
  * @return false : c is not comment character
  */
-static bool s_isComment(const char& c) {
+static inline bool s_isComment(const char& c) {
     if (c == ';' || c == '#') {
         return true;
     }
@@ -211,7 +186,7 @@ static bool s_isComment(const char& c) {
  * @param str
  * @param index
  */
-static void s_stringJumpSpace(const std::string& str, std::size_t& index) {
+static inline void s_stringJumpSpace(const std::string& str, std::size_t& index) {
     while (::isspace(str[index])) {
         ++index;
     }
@@ -224,7 +199,7 @@ static void s_stringJumpSpace(const std::string& str, std::size_t& index) {
  * @return true : line is empty or comment
  * @return false : line is not empty or comment
  */
-static bool s_emptyOrComment(const std::string& line, std::string* retComment) {
+static inline bool s_emptyOrComment(const std::string& line, std::string* retComment) {
     std::size_t start;
     std::size_t end;
     std::size_t i = 0;
@@ -258,7 +233,7 @@ static bool s_emptyOrComment(const std::string& line, std::string* retComment) {
  * @return true
  * @return false
  */
-static bool s_parseSections(std::string line, std::list<std::string>* retSection, std::string* retComment) {
+static inline bool s_parseSections(std::string line, std::list<std::string>* retSection, std::string* retComment) {
     char        quote;
     std::size_t start;
     std::size_t end;
@@ -356,7 +331,7 @@ static bool s_parseSections(std::string line, std::list<std::string>* retSection
  * @return true
  * @return false
  */
-static bool s_parseSectionLevel(std::string line, std::list<std::string>* retSection, std::string* retComment) {
+static inline bool s_parseSectionLevel(std::string line, std::list<std::string>* retSection, std::string* retComment) {
     char        quote;
     std::size_t start;
     std::size_t end;
@@ -463,7 +438,7 @@ static bool s_parseSectionLevel(std::string line, std::list<std::string>* retSec
  * @return true
  * @return false
  */
-static bool s_parseKey(std::string line, std::list<std::string>* retKey, std::string* retValue,
+static inline bool s_parseKey(std::string line, std::list<std::string>* retKey, std::string* retValue,
                        std::string* retComment) {
     char        quote;
     std::size_t start;
@@ -633,7 +608,7 @@ static bool s_parseKey(std::string line, std::list<std::string>* retKey, std::st
  * @param sections
  * @return Configator::Map&
  */
-static Configator::Map& s_section(Configator::Map& map, const std::list<std::string>& sections) {
+static inline Configator::Map& s_section(Configator::Map& map, const std::list<std::string>& sections) {
     std::list<std::string>::const_iterator itSection;
 
     Configator::Map* pMap = &map;
@@ -643,7 +618,7 @@ static Configator::Map& s_section(Configator::Map& map, const std::list<std::str
     return *pMap;
 }
 
-void Configator::readStream(std::istream& stream) {
+void Configator::parseStream(std::istream& stream) {
     std::string line("");
     std::list<std::string> sections;
     sections.push_back("");
@@ -675,9 +650,9 @@ void Configator::readStream(std::istream& stream) {
 
             for (it = keys.begin(); it != keys.end() ; ++it) {
                 if (it->empty()) {
-                    std::ostringstream oss("");
-                    oss << tmpMap->size();
-                    tmpMap = &((*tmpMap)[oss.str()]);
+                    char str[64];
+                    snprintf(str, sizeof(str), "%lu", (unsigned long)tmpMap->size());
+                    tmpMap = &((*tmpMap)[str]);
                 }
                 else {
                     tmpMap = &((*tmpMap)[*it]);
