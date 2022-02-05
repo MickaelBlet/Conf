@@ -31,8 +31,8 @@ Configator::Map Configator::Map::_emptyMap = Configator::Map();
 
 Configator::Map::Map():
     std::map<std::string, Map>(),
-    comment(std::string()),
-    value(std::string()) {
+    comment(std::string("")),
+    value(std::string("")) {
     return ;
 }
 
@@ -42,15 +42,19 @@ void Configator::Map::valueToStream(std::ostream& stringStream) const {
     if (value[index] == '-' || value[index] == '+') {
         ++index;
     }
+    // is hex
     if (value[index] == '0' && value[index + 1] == 'x') {
         stringStream << strtoll(value.c_str(), NULL, 16);
     }
+    // is binary
     else if (value[index] == '0' && value[index + 1] == 'b') {
         stringStream << strtoull(value.c_str() + index + 2, NULL, 2);
     }
+    // is octal
     else if (value[index] == '0' && value.find('.') == std::string::npos) {
         stringStream << strtoll(value.c_str(), NULL, 8);
     }
+    // is bool
     else if (value == "TRUE" || value == "True" || value == "true" ||
              value == "ON"   || value == "On"   || value == "on"   ||
              value == "YES"  || value == "Yes"  || value == "yes") {

@@ -234,12 +234,13 @@ static inline bool s_emptyOrComment(const std::string& line, std::string* retCom
  * @return false
  */
 static inline bool s_parseSections(std::string line, std::list<std::string>* retSection, std::string* retComment) {
-    char        quote;
-    std::size_t start;
-    std::size_t end;
-    std::size_t last;
-    std::size_t level = 0;
-    std::size_t i = 0;
+    char                   quote;
+    std::size_t            start;
+    std::size_t            end;
+    std::size_t            last;
+    std::size_t            level = 0;
+    std::size_t            i = 0;
+    std::list<std::string> tmpSection = *retSection;
 
     s_stringJumpSpace(line, i);
     // if not begin section
@@ -295,13 +296,13 @@ static inline bool s_parseSections(std::string line, std::list<std::string>* ret
         }
         ++i; // jump ]
         if (level == 1) {
-            retSection->clear();
+            tmpSection.clear();
         }
-        retSection->push_back(line.substr(start, end - start));
+        tmpSection.push_back(line.substr(start, end - start));
         s_stringJumpSpace(line, i);
     }
     if (line[i] != '\0' && !s_isComment(line[i])) {
-        retSection->pop_back();
+        tmpSection.pop_back();
         return false;
     }
     if (s_isComment(line[i])) {
@@ -319,6 +320,7 @@ static inline bool s_parseSections(std::string line, std::list<std::string>* ret
         end = i;
         *retComment = line.substr(start, end - start);
     }
+    *retSection = tmpSection;
     return true;
 }
 
@@ -332,13 +334,14 @@ static inline bool s_parseSections(std::string line, std::list<std::string>* ret
  * @return false
  */
 static inline bool s_parseSectionLevel(std::string line, std::list<std::string>* retSection, std::string* retComment) {
-    char        quote;
-    std::size_t start;
-    std::size_t end;
-    std::size_t last;
-    std::size_t level = 0;
-    std::size_t saveLevel = 0;
-    std::size_t i = 0;
+    char                   quote;
+    std::size_t            start;
+    std::size_t            end;
+    std::size_t            last;
+    std::size_t            level = 0;
+    std::size_t            saveLevel = 0;
+    std::size_t            i = 0;
+    std::list<std::string> tmpSection = *retSection;
 
     s_stringJumpSpace(line, i);
     // if not begin section
@@ -397,11 +400,11 @@ static inline bool s_parseSectionLevel(std::string line, std::list<std::string>*
         return false;
     }
     --saveLevel;
-    while (retSection->size() > saveLevel) {
-        retSection->pop_back();
+    while (tmpSection.size() > saveLevel) {
+        tmpSection.pop_back();
     }
-    if (saveLevel == retSection->size()) {
-        retSection->push_back(line.substr(start, end - start));
+    if (saveLevel == tmpSection.size()) {
+        tmpSection.push_back(line.substr(start, end - start));
     }
     else {
         return false;
@@ -425,6 +428,7 @@ static inline bool s_parseSectionLevel(std::string line, std::list<std::string>*
         end = i;
         *retComment = line.substr(start, end - start);
     }
+    *retSection = tmpSection;
     return true;
 }
 
@@ -439,7 +443,7 @@ static inline bool s_parseSectionLevel(std::string line, std::list<std::string>*
  * @return false
  */
 static inline bool s_parseKey(std::string line, std::list<std::string>* retKey, std::string* retValue,
-                       std::string* retComment) {
+                              std::string* retComment) {
     char        quote;
     std::size_t start;
     std::size_t end;
@@ -619,8 +623,10 @@ static inline Configator::Map& s_section(Configator::Map& map, const std::list<s
 }
 
 void Configator::parseStream(std::istream& stream) {
-    std::string line("");
+    std::string            line("");
     std::list<std::string> sections;
+
+    // default section
     sections.push_back("");
 
     while (std::getline(stream, line)) {
@@ -650,7 +656,7 @@ void Configator::parseStream(std::istream& stream) {
 
             for (it = keys.begin(); it != keys.end() ; ++it) {
                 if (it->empty()) {
-                    char str[64];
+                    char str[32];
                     snprintf(str, sizeof(str), "%lu", (unsigned long)tmpMap->size());
                     tmpMap = &((*tmpMap)[str]);
                 }

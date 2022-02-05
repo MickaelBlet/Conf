@@ -35,18 +35,15 @@
 # include <cstdlib>
 
 namespace mblet {
-
 /**
  * @brief load .ini file with table index
  */
 class Configator {
-
   public:
     /**
      * @brief Container map by index
      */
     class Map : public std::map<std::string, Map> {
-
       public:
         /**
          * @brief overide operator stream for print value
@@ -81,9 +78,9 @@ class Configator {
          * @return Map& : map from index
          */
         inline Map& operator[](unsigned long index) {
-            char str[64];
+            char str[32];
             snprintf(str, sizeof(str), "%lu", index);
-            return this->operator[](str);
+            return operator[](str);
         }
 
         /**
@@ -93,9 +90,9 @@ class Configator {
          * @return const Map& : map from index
          */
         inline const Map& operator[](unsigned long index) const {
-            char str[64];
+            char str[32];
             snprintf(str, sizeof(str), "%lu", index);
-            return this->operator[](str);
+            return operator[](str);
         }
 
         /**
@@ -105,12 +102,12 @@ class Configator {
          * @return Map& : map from string
          */
         inline Map& operator[](const std::string& str) {
-            Configator::Map::iterator it = this->find(str);
-            if (it != this->end()) {
+            Configator::Map::iterator it = find(str);
+            if (it != end()) {
                 return it->second;
             }
-            this->insert(std::pair<std::string, Map>(str, Map()));
-            return this->at(str);
+            insert(std::pair<std::string, Map>(str, Map()));
+            return at(str);
         }
 
         /**
@@ -121,7 +118,7 @@ class Configator {
          */
         inline const Map& operator[](const std::string& str) const {
             Map::const_iterator it = find(str);
-            if (it != this->end()) {
+            if (it != end()) {
                 return it->second;
             }
             return _emptyMap;
@@ -129,7 +126,7 @@ class Configator {
 
         /**
          * @brief get value
-         * convert octal or hex value
+         * convert bibary or octal or hex value
          * bool == "true"||"false", "on"||"off"
          *
          * @tparam T : type of return (from string)
@@ -146,7 +143,7 @@ class Configator {
 
         /**
          * @brief get value with default value
-         * convert octal or hex value
+         * convert bibary or octal or hex value
          * bool == "true"||"false", "on"||"off"
          *
          * @tparam T : type of return (from string)
@@ -171,9 +168,14 @@ class Configator {
         std::string value;
 
       private:
-        static Map _emptyMap;
-
+        /**
+         * @brief parse value and use operator << in stream
+         *
+         * @param stringStream
+         */
         void valueToStream(std::ostream& stringStream) const;
+
+        static Map _emptyMap;
 
     };
 
@@ -218,10 +220,20 @@ class Configator {
      */
     bool readFile(const char* filename);
 
+    /**
+     * @brief read stream and load its config
+     *
+     * @param stream
+     */
     inline void readStream(std::istream& stream) {
         parseStream(stream);
     }
 
+    /**
+     * @brief read string and load its config
+     *
+     * @param str
+     */
     inline void readString(const std::string& str) {
         std::istringstream istr(str);
         parseStream(istr);
@@ -286,10 +298,10 @@ class Configator {
     }
 
     /**
-     * @brief dump in string the map
+     * @brief dump in stream
      *
-     * @param indent
-     * @return std::string
+     * @param oss
+     * @return std::ostream&
      */
     std::ostream& dump(std::ostream& oss = std::cout) const;
 
@@ -308,6 +320,6 @@ class Configator {
 
 }; // class Configator
 
-} // namespace Config
+} // namespace mblet
 
 #endif // _MBLET_CONFIGATOR_HPP_

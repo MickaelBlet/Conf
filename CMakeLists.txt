@@ -23,5 +23,6 @@ set_target_properties("${PROJECT_NAME}"
 
 if(DEFINED BUILD_TESTING)
     message(STATUS "Enable BUILD_TESTING: ${BUILD_TESTING}")
+    enable_testing()
     add_subdirectory(test)
 endif()

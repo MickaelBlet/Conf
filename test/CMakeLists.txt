@@ -1,7 +1,5 @@
 cmake_minimum_required(VERSION 2.6)
 
-enable_testing()
-
 project(configator_test CXX)
 
 include_directories(
