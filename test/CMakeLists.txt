@@ -1,7 +1,5 @@
 cmake_minimum_required(VERSION 2.6)
 
-project(configator_test CXX)
-
 include_directories(
     "${CMAKE_CURRENT_SOURCE_DIR}/include"
 )
@@ -19,7 +17,7 @@ foreach(file ${test_files})
             NO_SYSTEM_FROM_IMPORTED ON
     )
     target_compile_options("configator_${filenamewe}.gtest" PRIVATE -pedantic -Wall -Wextra -Werror)
-    target_link_libraries("configator_${filenamewe}.gtest" gtest_main gmock pthread)
+    target_link_libraries("configator_${filenamewe}.gtest" gtest_main gtest pthread)
     target_link_libraries("configator_${filenamewe}.gtest" configator)
     add_test(NAME "configator_${filenamewe}.gtest" COMMAND "configator_${filenamewe}.gtest")
 endforeach()

@@ -3,6 +3,7 @@
 
 #include <fstream>
 #include <string>
+#include <cstdio>
 
 class FileGuard : public std::ofstream {
   public:

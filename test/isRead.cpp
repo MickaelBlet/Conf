@@ -1,5 +1,4 @@
 #include <gtest/gtest.h>
-#include <stdint.h>
 
 #include "configator.hpp"
 #include "fileGuard.hpp"

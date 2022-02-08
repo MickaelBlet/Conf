@@ -4,10 +4,14 @@ ini reader for c++
 
 ## Build
 ```bash
-# build
+# static build
 mkdir build ; pushd build && cmake .. && make -j ; popd
-# build and launch test
+# shared build
+mkdir build ; pushd build && cmake -DBUILD_SHARED_LIBS=1 .. && make -j ; popd
+# static build and launch test
 mkdir build ; pushd build && cmake -DBUILD_TESTING=1 .. && make -j && make test ; popd
+# shared build and launch test
+mkdir build ; pushd build && cmake -DBUILD_SHARED_LIBS=1 -DBUILD_TESTING=1 .. && make -j && make test ; popd
 ```
 
 ## Examples

@@ -271,7 +271,7 @@ class Configator {
     /**
      * @brief Get the Config object
      *
-     * @return const Map& : all mac config
+     * @return const Map& : config object
      */
     inline const Map& getConfig() const {
         return _mapConfig;
