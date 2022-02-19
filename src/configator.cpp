@@ -131,7 +131,7 @@ static inline void s_sectionDump(std::ostream& oss, const std::string& str, std:
     oss << std::string(sectionIndex + 1, ']');
 }
 
-static inline void s_recurseDump(std::ostream& oss, const Configator::Map& map, std::size_t sectionIndex = 0) {
+static void s_recurseDump(std::ostream& oss, const Configator::Map& map, std::size_t sectionIndex = 0) {
     Configator::Map::const_iterator itSection;
     for (itSection = map.begin(); itSection != map.end(); ++itSection) {
         if (itSection->second.size() > 0) {
