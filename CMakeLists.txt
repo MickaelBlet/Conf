@@ -20,8 +20,17 @@ set_target_properties("${PROJECT_NAME}"
         INTERFACE_INCLUDE_DIRECTORIES "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>;$<INSTALL_INTERFACE:include/${PROJECT_NAME}>"
 )
 
-if(BUILD_TESTING)
+if (BUILD_TESTING)
     message(STATUS "Enable BUILD_TESTING: ${BUILD_TESTING}")
     enable_testing()
+    if (BUILD_COVERAGE)
+        message(STATUS "Enable BUILD_COVERAGE: ${BUILD_COVERAGE}")
+        target_compile_options("${PROJECT_NAME}" PRIVATE -g -O0 --coverage -fprofile-arcs -ftest-coverage)
+        target_link_libraries("${PROJECT_NAME}" gcov)
+        # Path to CodeCoverage
+        set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/etc/cmake")
+        include(CodeCoverage)
+        append_coverage_compiler_flags_to_target("${PROJECT_NAME}")
+    endif() # BUILD_COVERAGE
     add_subdirectory(test)
-endif()
+endif() # BUILD_TESTING

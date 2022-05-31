@@ -117,11 +117,13 @@ class Configator {
          * @return const Map& : map from string
          */
         inline const Map& operator[](const std::string& str) const {
+            static Map emptyMap;
+
             Map::const_iterator it = find(str);
             if (it != end()) {
                 return it->second;
             }
-            return _emptyMap;
+            return emptyMap;
         }
 
         /**
@@ -174,8 +176,6 @@ class Configator {
          * @param stringStream
          */
         void valueToStream(std::ostream& stringStream) const;
-
-        static Map _emptyMap;
 
     };
 

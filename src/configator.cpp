@@ -126,13 +126,22 @@ static inline void s_sectionCommentDump(std::ostream& oss, const std::string& st
 }
 
 static inline void s_sectionDump(std::ostream& oss, const std::string& str, std::size_t sectionIndex) {
-    oss << std::string(sectionIndex + 1, '[');
+    oss << std::string(sectionIndex, '[');
     s_printDump(oss, str);
-    oss << std::string(sectionIndex + 1, ']');
+    oss << std::string(sectionIndex, ']');
 }
 
-static void s_recurseDump(std::ostream& oss, const Configator::Map& map, std::size_t sectionIndex = 0) {
+static void s_recurseDump(std::ostream& oss, const Configator::Map& map, std::size_t sectionIndex = 1) {
     Configator::Map::const_iterator itSection;
+    for (itSection = map.begin(); itSection != map.end(); ++itSection) {
+        if (itSection->second.empty()) {
+            s_printDump(oss, itSection->first);
+            oss << " = ";
+            s_printDump(oss, itSection->second.value);
+            s_printCommentDump(oss, itSection->second.comment);
+            oss << '\n';
+        }
+    }
     for (itSection = map.begin(); itSection != map.end(); ++itSection) {
         if (itSection->second.size() > 0) {
             if (!itSection->second.value.empty()) {
@@ -145,13 +154,6 @@ static void s_recurseDump(std::ostream& oss, const Configator::Map& map, std::si
             oss << '\n';
             s_sectionCommentDump(oss, itSection->second.comment);
             s_recurseDump(oss, itSection->second, sectionIndex + 1);
-        }
-        else {
-            s_printDump(oss, itSection->first);
-            oss << " = ";
-            s_printDump(oss, itSection->second.value);
-            s_printCommentDump(oss, itSection->second.comment);
-            oss << '\n';
         }
     }
 }
@@ -205,7 +207,10 @@ static inline bool s_emptyOrComment(const std::string& line, std::string* retCom
     std::size_t i = 0;
 
     s_stringJumpSpace(line, i);
-    if (line[i] != '\0' && !s_isComment(line[i])) {
+    if (line[i] == '\0') {
+        return true; // empty line
+    }
+    if (!s_isComment(line[i])) {
         return false;
     }
     ++i; // jump character ';' or '#'
@@ -215,7 +220,7 @@ static inline bool s_emptyOrComment(const std::string& line, std::string* retCom
         ++i;
     }
     --i; // revert jump '\0'
-    while (i > 0 && isspace(line[i])) {
+    while (i > 0 && ::isspace(line[i])) {
         --i;
     }
     ++i; // last character
@@ -284,7 +289,7 @@ static inline bool s_parseSections(std::string line, std::list<std::string>* ret
             }
             last = i;
             --i; // revert jump ']'
-            while (i > 0 && isspace(line[i])) {
+            while (i > 0 && ::isspace(line[i])) {
                 --i;
             }
             ++i; // last character
@@ -313,7 +318,7 @@ static inline bool s_parseSections(std::string line, std::list<std::string>* ret
             ++i;
         }
         --i; // revert jump '\0'
-        while (i > 0 && isspace(line[i])) {
+        while (i > 0 && ::isspace(line[i])) {
             --i;
         }
         ++i; // last character
@@ -383,7 +388,7 @@ static inline bool s_parseSectionLevel(std::string line, std::list<std::string>*
         }
         last = i;
         --i; // revert jump ']'
-        while (i > 0 && isspace(line[i])) {
+        while (i > 0 && ::isspace(line[i])) {
             --i;
         }
         ++i; // last character
@@ -421,7 +426,7 @@ static inline bool s_parseSectionLevel(std::string line, std::list<std::string>*
             ++i;
         }
         --i; // revert jump '\0'
-        while (i > 0 && isspace(line[i])) {
+        while (i > 0 && ::isspace(line[i])) {
             --i;
         }
         ++i; // last character
@@ -487,7 +492,7 @@ static inline bool s_parseKey(std::string line, std::list<std::string>* retKey, 
         }
         last = i;
         --i; // revert jump '=' or '['
-        while (i > 0 && isspace(line[i])) {
+        while (i > 0 && ::isspace(line[i])) {
             --i;
         }
         ++i; // last character
@@ -532,7 +537,7 @@ static inline bool s_parseKey(std::string line, std::list<std::string>* retKey, 
             }
             last = i;
             --i; // revert jump '=' or '['
-            while (i > 0 && isspace(line[i])) {
+            while (i > 0 && ::isspace(line[i])) {
                 --i;
             }
             ++i; // last character
@@ -579,7 +584,7 @@ static inline bool s_parseKey(std::string line, std::list<std::string>* retKey, 
         }
         last = i;
         --i; // revert jump '\0' or ';' or '#'
-        while (i > 0 && isspace(line[i])) {
+        while (i > 0 && ::isspace(line[i])) {
             --i;
         }
         ++i; // last character
@@ -595,7 +600,7 @@ static inline bool s_parseKey(std::string line, std::list<std::string>* retKey, 
             ++i;
         }
         --i; // revert jump '\0'
-        while (i > 0 && isspace(line[i])) {
+        while (i > 0 && ::isspace(line[i])) {
             --i;
         }
         ++i; // last character
@@ -635,11 +640,13 @@ void Configator::parseStream(std::istream& stream) {
         std::string value   = "";
 
         if (s_emptyOrComment(line, &comment)) {
-            Configator::Map& map = s_section(_mapConfig, sections);
-            if (!map.comment.empty()) {
-                map.comment.append("\n");
+            if (!comment.empty()) {
+                Configator::Map& map = s_section(_mapConfig, sections);
+                if (!map.comment.empty()) {
+                    map.comment.append("\n");
+                }
+                map.comment.append(comment);
             }
-            map.comment.append(comment);
         }
         else if (s_parseSections(line, &sections, &comment)) {
             Configator::Map& map = s_section(_mapConfig, sections);
@@ -657,7 +664,7 @@ void Configator::parseStream(std::istream& stream) {
             for (it = keys.begin(); it != keys.end() ; ++it) {
                 if (it->empty()) {
                     char str[32];
-                    snprintf(str, sizeof(str), "%lu", (unsigned long)tmpMap->size());
+                    snprintf(str, sizeof(str), "%lu", static_cast<unsigned long>(tmpMap->size()));
                     tmpMap = &((*tmpMap)[str]);
                 }
                 else {

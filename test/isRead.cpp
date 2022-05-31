@@ -8,14 +8,12 @@ GTEST_TEST(isRead, success) {
     // create example file
     FileGuard fileGuard(testFile, std::ofstream::out | std::ofstream::trunc);
     fileGuard.close();
-    mblet::Configator conf;
-    EXPECT_EQ(conf.readFile(testFile), true);
+    mblet::Configator conf(testFile);
     EXPECT_EQ(conf.isRead(), true);
 }
 
 GTEST_TEST(isRead, failure) {
     const char* testFile = "test.ini";
-    mblet::Configator conf;
-    EXPECT_EQ(conf.readFile(testFile), false);
+    mblet::Configator conf(testFile);
     EXPECT_EQ(conf.isRead(), false);
 }

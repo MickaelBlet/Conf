@@ -74,7 +74,7 @@ GTEST_TEST(configator, test4) {
     std::string strConf("[ grandfather ]  ; commment line\n" \
                         "[ [ father ] ]\n" \
                         "[ [ [ child ] ] ]\n" \
-                        "0=true   ;bool\n" \
+                        "0=false   ;bool\n" \
                         "1=-42.42 ;dec\n" \
                         "2=0x42   ;hex\n" \
                         "3=0b0101 ;binary\n" \
@@ -85,7 +85,7 @@ GTEST_TEST(configator, test4) {
     mblet::Configator conf;
     conf.readString(strConf);
 
-    EXPECT_EQ(conf["grandfather"]["father"]["child"]["0"].get<int>(), 1);
+    EXPECT_EQ(conf["grandfather"]["father"]["child"]["0"].get<int>(), 0);
     EXPECT_EQ(conf["grandfather"]["father"]["child"]["1"].get<int>(), -42);
     EXPECT_EQ(conf["grandfather"]["father"]["child"]["2"].get<int>(), 66);
     EXPECT_EQ(conf["grandfather"]["father"]["child"]["3"].get<int>(), 5);

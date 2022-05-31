@@ -27,8 +27,6 @@
 
 namespace mblet {
 
-Configator::Map Configator::Map::_emptyMap = Configator::Map();
-
 Configator::Map::Map():
     std::map<std::string, Map>(),
     comment(std::string("")),

@@ -83,7 +83,7 @@ $ cat ./test4.ini
 [ grandfather ]  ; commment line
 [ [ father ] ]
 [ [ [ child ] ] ]
-0=true   ;bool
+0=false  ;bool
 1=-42.42 ;dec
 2=0x42   ;hex
 3=0b0101 ;binary
@@ -100,7 +100,7 @@ std::cout << conf["grandfather"]["father"]["child"]["3"].get<int>() << std::endl
 std::cout << conf["grandfather"]["father"]["child"]["4"].get<int>() << std::endl;
 std::cout << conf["grandmother"]["mother"]["child"]["5"].get<int>() << std::endl;
 // output:
-// 1
+// 0
 // -42
 // 66
 // 5
