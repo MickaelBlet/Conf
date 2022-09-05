@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "configator.hpp"
+#include "mblet/configator.hpp"
 
 GTEST_TEST(constructor, success) {
     // create example string

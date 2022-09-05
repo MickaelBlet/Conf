@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
+#include <cmath>
 
-#include "configator.hpp"
+#include "mblet/configator.hpp"
 
 GTEST_TEST(parser, s_emptyOrComment) {
     std::string strConf("   \n"
@@ -11,7 +12,7 @@ GTEST_TEST(parser, s_emptyOrComment) {
 
     mblet::Configator conf;
     conf.readString(strConf);
-    EXPECT_EQ(conf[""].comment, "comment\nnew line");
+    EXPECT_EQ(conf[""].getComment(), "comment\nnew line");
 }
 
 GTEST_TEST(parser, s_parseSections) {
@@ -25,7 +26,7 @@ GTEST_TEST(parser, s_parseSections) {
 
     mblet::Configator conf;
     conf.readString(strConf);
-    EXPECT_EQ(conf["\" "].comment, "in section");
+    EXPECT_EQ(conf["\" "].getComment(), "in section");
 }
 
 GTEST_TEST(parser, s_parseSectionLevel) {
@@ -40,7 +41,7 @@ GTEST_TEST(parser, s_parseSectionLevel) {
 
     mblet::Configator conf;
     conf.readString(strConf);
-    EXPECT_EQ(conf["section"]["\" "].comment, "in section");
+    EXPECT_EQ(conf["section"]["\" "].getComment(), "in section");
 }
 
 GTEST_TEST(parser, s_parseKey) {
@@ -57,5 +58,35 @@ GTEST_TEST(parser, s_parseKey) {
                        );
     mblet::Configator conf;
     conf.readString(strConf);
-    EXPECT_EQ(conf[""]["key"].value, "value");
+    EXPECT_EQ(conf[""]["key"].getString(), "value");
+}
+
+GTEST_TEST(parser, s_hex) {
+    std::string strConf("hex=0x0Aa ; comment \n"
+                        "nohex=0x0AaU ; comment \n"
+                       );
+    mblet::Configator conf;
+    conf.readString(strConf);
+    EXPECT_EQ(conf[""]["hex"].getNumber(), 170);
+    EXPECT_EQ(std::isnan(conf[""]["nohex"].getNumber()), true);
+}
+
+GTEST_TEST(parser, s_binary) {
+    std::string strConf("binary=0b0101 ; comment \n"
+                        "nobinary=0b2 ; comment \n"
+                       );
+    mblet::Configator conf;
+    conf.readString(strConf);
+    EXPECT_EQ(conf[""]["binary"].getNumber(), 5);
+    EXPECT_EQ(std::isnan(conf[""]["nobinary"].getNumber()), true);
+}
+
+GTEST_TEST(parser, s_octal) {
+    std::string strConf("octal=0101 ; comment \n"
+                        "nooctal=02a ; comment \n"
+                       );
+    mblet::Configator conf;
+    conf.readString(strConf);
+    EXPECT_EQ(conf[""]["octal"].getNumber(), 65);
+    EXPECT_EQ(std::isnan(conf[""]["nooctal"].getNumber()), true);
 }

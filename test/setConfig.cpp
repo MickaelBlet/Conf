@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "configator.hpp"
+#include "mblet/configator.hpp"
 
 GTEST_TEST(setConfig, success) {
     // create example string
@@ -11,7 +11,7 @@ GTEST_TEST(setConfig, success) {
     mblet::Configator conf;
     conf.readString(strConf);
     EXPECT_EQ(conf.getConfig().size(), 2); // two sections
-    EXPECT_EQ(conf["test"]["42"]["42"].value, "42");
+    EXPECT_EQ(conf["test"]["42"]["42"].getString(), "42");
     // clean configuration map
     mblet::Configator::Map newMap;
     conf.setConfig(newMap);

@@ -53,7 +53,7 @@ class Configator {
          * @return std::ostream&
          */
         inline friend std::ostream& operator<<(std::ostream& os, const Map& map) {
-            os << map.value;
+            os << map._string;
             return os;
         }
 
@@ -68,7 +68,9 @@ class Configator {
          * @param str : new value
          */
         inline void operator=(const std::string& str) {
-            value = str;
+            _isExist = true;
+            _string = str;
+            stringToType();
         }
 
         /**
@@ -77,9 +79,10 @@ class Configator {
          * @param index : at index
          * @return Map& : map from index
          */
-        inline Map& operator[](unsigned long index) {
+        template<typename T>
+        inline Map& operator[](const T& index) {
             char str[32];
-            snprintf(str, sizeof(str), "%lu", index);
+            snprintf(str, sizeof(str), "%lu", static_cast<unsigned long>(index));
             return operator[](str);
         }
 
@@ -89,9 +92,10 @@ class Configator {
          * @param index : at index
          * @return const Map& : map from index
          */
-        inline const Map& operator[](unsigned long index) const {
+        template<typename T>
+        inline const Map& operator[](const T& index) const {
             char str[32];
-            snprintf(str, sizeof(str), "%lu", index);
+            snprintf(str, sizeof(str), "%lu", static_cast<unsigned long>(index));
             return operator[](str);
         }
 
@@ -126,56 +130,155 @@ class Configator {
             return emptyMap;
         }
 
-        /**
-         * @brief get value
-         * convert bibary or octal or hex value
-         * bool == "true"||"false", "on"||"off"
-         *
-         * @tparam T : type of return (from string)
-         * @return T : convert value
-         */
-        template<typename T>
-        T get() const {
-            T retValue;
-            std::stringstream stringStream("");
-            valueToStream(stringStream);
-            stringStream >> retValue;
-            return retValue;
+        Map& operator[](const char* str) {
+            return operator[](std::string(str));
         }
 
-        /**
-         * @brief get value with default value
-         * convert bibary or octal or hex value
-         * bool == "true"||"false", "on"||"off"
-         *
-         * @tparam T : type of return (from string)
-         * @return T : convert value
-         */
-        template<typename T, typename U>
-        T get(const U& defaultValue) const {
-            T retValue;
-            std::stringstream stringStream("");
+        const Map& operator[](const char* str) const {
+            return operator[](std::string(str));
+        }
 
-            if (value.empty()) {
-                stringStream << defaultValue;
+        template<size_t Size>
+        Map& operator[](const char (&str)[Size]) {
+            return operator[](std::string(str));
+        }
+
+        template<size_t Size>
+        const Map& operator[](const char (&str)[Size]) const {
+            return operator[](std::string(str));
+        }
+
+        const std::string& getComment() const {
+            return _comment;
+        }
+
+        const std::string& getComment(const std::string& defaultValue) const {
+            if (_isExist) {
+                return _comment;
             }
             else {
-                valueToStream(stringStream);
+                return defaultValue;
             }
-            stringStream >> retValue;
-            return retValue;
         }
 
-        std::string comment;
-        std::string value;
+        const std::string& getString() const {
+            return _string;
+        }
+
+        const std::string& getString(const std::string& defaultValue) const {
+            if (_isExist) {
+                return _string;
+            }
+            else {
+                return defaultValue;
+            }
+        }
+
+        const double& getNumber() const {
+            return _number;
+        }
+
+        const double& getNumber(const double& defaultValue) const {
+            if (_isExist) {
+                return _number;
+            }
+            else {
+                return defaultValue;
+            }
+        }
+
+        const bool& getBoolean() const {
+            return _boolean;
+        }
+
+        const bool& getBoolean(const bool& defaultValue) const {
+            if (_isExist) {
+                return _boolean;
+            }
+            else {
+                return defaultValue;
+            }
+        }
+
+        const bool& isExist() const {
+            return _isExist;
+        }
+
+        template<typename T>
+        T get() const {
+            T ret;
+            std::stringstream ss("");
+            if (_isBoolean) {
+                ss << _boolean;
+            }
+            else if (_isNumber) {
+                ss << _number;
+            }
+            else {
+                ss << _string;
+            }
+            ss >> ret;
+            return ret;
+        }
+
+        template<typename T, typename U>
+        T get(const U& defaultValue) const {
+            T ret;
+            std::stringstream ss("");
+
+            if (!_isExist) {
+                ss << defaultValue;
+            }
+            else {
+                if (_isBoolean) {
+                    ss << _boolean;
+                }
+                else if (_isNumber) {
+                    ss << _number;
+                }
+                else {
+                    ss << _string;
+                }
+            }
+            ss >> ret;
+            return ret;
+        }
+
+        template<typename T>
+        void get(T& ret) const {
+            ret = get<T>();
+        }
+
+        operator const std::string&() const {
+            return getString();
+        }
+
+        operator const char*() const {
+            return getString().c_str();
+        }
+
+        operator const bool&() const {
+            return getBoolean();
+        }
+
+        template<typename T>
+        operator T() const {
+            return getNumber();
+        }
 
       private:
-        /**
-         * @brief parse value and use operator << in stream
-         *
-         * @param stringStream
-         */
-        void valueToStream(std::ostream& stringStream) const;
+
+        friend class Configator;
+
+        void stringToType();
+
+        std::string _comment;
+        std::string _string;
+        double _number;
+        bool _boolean;
+        bool _isExist;
+        bool _isNumber;
+        bool _isBoolean;
 
     };
 

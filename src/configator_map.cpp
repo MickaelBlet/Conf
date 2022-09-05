@@ -23,48 +23,178 @@
  * SOFTWARE.
  */
 
-#include "configator.hpp"
+#include "mblet/configator.hpp"
+#include <cmath>
 
 namespace mblet {
 
 Configator::Map::Map():
     std::map<std::string, Map>(),
-    comment(std::string("")),
-    value(std::string("")) {
-    return ;
-}
+    _comment(std::string()),
+    _string(std::string()),
+    _number(NAN),
+    _boolean(false),
+    _isExist(false),
+    _isNumber(false),
+    _isBoolean(false)
+{}
 
-void Configator::Map::valueToStream(std::ostream& stringStream) const {
+static bool s_hex(const std::string& value, std::ostream& stringStream) {
     std::size_t index = 0;
 
     if (value[index] == '-' || value[index] == '+') {
         ++index;
     }
     // is hex
-    if (value[index] == '0' && value[index + 1] == 'x') {
+    if (value[index] == '0' && (value[index + 1] == 'x' || value[index + 1] == 'X')) {
+        ++index;
+        ++index;
+        while (value[index] != '\0') {
+            if (value[index] >= '0' && value[index] <= '9') {
+                ++index;
+            }
+            else if (value[index] >= 'a' && value[index] <= 'f') {
+                ++index;
+            }
+            else if (value[index] >= 'A' && value[index] <= 'F') {
+                ++index;
+            }
+            else {
+                return false;
+            }
+        }
         stringStream << strtoll(value.c_str(), NULL, 16);
-    }
-    // is binary
-    else if (value[index] == '0' && value[index + 1] == 'b') {
-        stringStream << strtoull(value.c_str() + index + 2, NULL, 2);
-    }
-    // is octal
-    else if (value[index] == '0' && value.find('.') == std::string::npos) {
-        stringStream << strtoll(value.c_str(), NULL, 8);
-    }
-    // is bool
-    else if (value == "TRUE" || value == "True" || value == "true" ||
-             value == "ON"   || value == "On"   || value == "on"   ||
-             value == "YES"  || value == "Yes"  || value == "yes") {
-        stringStream << true;
-    }
-    else if (value == "FALSE" || value == "False" || value == "false" ||
-             value == "OFF"   || value == "Off"   || value == "off"   ||
-             value == "NO"    || value == "No"    || value == "no") {
-        stringStream << false;
+        return true;
     }
     else {
-        stringStream << value;
+        return false;
+    }
+}
+
+static bool s_binary(const std::string& value, std::ostream& stringStream) {
+    std::size_t index = 0;
+
+    if (value[index] == '-' || value[index] == '+') {
+        ++index;
+    }
+    // is binary
+    if (value[index] == '0' && (value[index + 1] == 'b' || value[index + 1] == 'B')) {
+        ++index;
+        ++index;
+        std::size_t start = index;
+        while (value[index] != '\0') {
+            if (value[index] == '0' || value[index] == '1') {
+                ++index;
+            }
+            else {
+                return false;
+            }
+        }
+        stringStream << strtoull(value.c_str() + start, NULL, 2);
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
+static bool s_octal(const std::string& value, std::ostream& stringStream) {
+    std::size_t index = 0;
+
+    if (value[index] == '-' || value[index] == '+') {
+        ++index;
+    }
+    // is binary
+    if (value[index] == '0' && value.find('.') == std::string::npos && value.find('e') == std::string::npos
+             && value.find('E') == std::string::npos) {
+        while (value[index] != '\0') {
+            if (value[index] >= '0' && value[index] <= '8') {
+                ++index;
+            }
+            else {
+                return false;
+            }
+        }
+        stringStream << strtoll(value.c_str(), NULL, 8);
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
+static bool s_double(const std::string& value, std::ostream& stringStream) {
+    std::size_t index = 0;
+
+    if (value[index] == '-' || value[index] == '+') {
+        ++index;
+    }
+    char *endPtr = NULL;
+    stringStream << strtod(value.c_str(), &endPtr);
+    if (endPtr != NULL && endPtr[0] != '\0') {
+        return false;
+    }
+    return true;
+}
+
+static bool s_bool(const std::string& value, bool& retBoolean) {
+    static const std::pair<std::string, bool> pairStrToBool[] = {
+        std::pair<std::string, bool>("TRUE", true),
+        std::pair<std::string, bool>("True", true),
+        std::pair<std::string, bool>("true", true),
+        std::pair<std::string, bool>("ON", true),
+        std::pair<std::string, bool>("On", true),
+        std::pair<std::string, bool>("on", true),
+        std::pair<std::string, bool>("YES", true),
+        std::pair<std::string, bool>("Yes", true),
+        std::pair<std::string, bool>("yes", true),
+        std::pair<std::string, bool>("Y", true),
+        std::pair<std::string, bool>("y", true),
+        std::pair<std::string, bool>("1", true),
+        std::pair<std::string, bool>("FALSE", false),
+        std::pair<std::string, bool>("False", false),
+        std::pair<std::string, bool>("false", false),
+        std::pair<std::string, bool>("OFF", false),
+        std::pair<std::string, bool>("Off", false),
+        std::pair<std::string, bool>("off", false),
+        std::pair<std::string, bool>("NO", false),
+        std::pair<std::string, bool>("No", false),
+        std::pair<std::string, bool>("no", false),
+        std::pair<std::string, bool>("N", false),
+        std::pair<std::string, bool>("n", false),
+        std::pair<std::string, bool>("0", false)
+    };
+    static const std::map<std::string, bool> strToBool(pairStrToBool,
+                                                       pairStrToBool + sizeof(pairStrToBool) / sizeof(*pairStrToBool));
+
+    std::map<std::string, bool>::const_iterator cit = strToBool.find(value);
+    if (cit != strToBool.end()) {
+        retBoolean = cit->second;
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
+void Configator::Map::stringToType() {
+    std::stringstream stringStream("");
+    bool retBoolean;
+    if (s_bool(_string, retBoolean)) {
+        _isBoolean = true;
+        _isNumber = true;
+        _boolean = retBoolean;
+        if (retBoolean) {
+            _number = 1;
+        }
+        else {
+            _number = 0;
+        }
+    }
+    else if (s_hex(_string, stringStream) || s_binary(_string, stringStream) ||
+        s_octal(_string, stringStream) || s_double(_string, stringStream)) {
+        _isNumber = true;
+        stringStream >> _number;
     }
 }
 

@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "configator.hpp"
+#include "mblet/configator.hpp"
 
 GTEST_TEST(configator, test1) {
     // create example string
@@ -10,7 +10,7 @@ GTEST_TEST(configator, test1) {
     mblet::Configator conf;
     conf.readString(strConf);
 
-    EXPECT_EQ(conf["test"]["42"].value, "-42.42");
+    EXPECT_EQ(conf["test"]["42"].getString(), "-42.42");
 }
 
 GTEST_TEST(configator, test2) {
@@ -25,29 +25,28 @@ GTEST_TEST(configator, test2) {
     mblet::Configator conf;
     conf.readString(strConf);
 
-    EXPECT_EQ(conf["test"]["0"].value, "true");
-    EXPECT_EQ(conf["test"]["0"].get<int>(), 1);
-    EXPECT_EQ(conf["test"]["0"].comment, "bool");
+    EXPECT_EQ(conf["test"]["0"].getString(), "true");
+    EXPECT_EQ(conf["test"]["0"].getNumber(), 1);
+    EXPECT_EQ(conf["test"]["0"].getComment(), "bool");
 
-    EXPECT_EQ(conf["test"]["1"].value, "-42.42");
+    EXPECT_EQ(conf["test"]["1"].getString(), "-42.42");
+    EXPECT_EQ(conf["test"]["1"].getNumber(), -42.42);
     EXPECT_EQ(conf["test"]["1"].get<int>(), -42);
-    EXPECT_EQ(conf["test"]["1"].get<double>(), -42.42);
-    EXPECT_EQ(conf["test"]["1"].comment, "dec");
+    EXPECT_EQ(conf["test"]["1"].getComment(), "dec");
 
-    EXPECT_EQ(conf["test"]["2"].value, "0x42");
-    EXPECT_EQ(conf["test"]["2"].get<int>(), 66);
-    EXPECT_EQ(conf["test"]["2"].comment, "hex");
+    EXPECT_EQ(conf["test"]["2"].getString(), "0x42");
+    EXPECT_EQ(conf["test"]["2"].getNumber(), 66);
+    EXPECT_EQ(conf["test"]["2"].getComment(), "hex");
 
-    EXPECT_EQ(conf["test"]["3"].value, "0b0101");
-    EXPECT_EQ(conf["test"]["3"].get<int>(), 5);
-    EXPECT_EQ(conf["test"]["3"].comment, "binary");
+    EXPECT_EQ(conf["test"]["3"].getString(), "0b0101");
+    EXPECT_EQ(conf["test"]["3"].getNumber(), 5);
+    EXPECT_EQ(conf["test"]["3"].getComment(), "binary");
 
-    EXPECT_EQ(conf["test"]["4"].value, "042");
-    EXPECT_EQ(conf["test"]["4"].get<int>(42), 34);
-    EXPECT_EQ(conf["test"]["4"].comment, "octal");
+    EXPECT_EQ(conf["test"]["4"].getString(), "042");
+    EXPECT_EQ(conf["test"]["4"].getNumber(), 34);
+    EXPECT_EQ(conf["test"]["4"].getComment(), "octal");
 
     EXPECT_EQ(conf["test"]["5"].get<int>(42), 42);
-    EXPECT_EQ(conf["test"]["5"].get<double>(42.42), 42.42);
 }
 
 GTEST_TEST(configator, test3) {
@@ -61,12 +60,12 @@ GTEST_TEST(configator, test3) {
     mblet::Configator conf;
     conf.readString(strConf);
 
-    EXPECT_EQ(conf["test"]["table"][1].get<int>(), 2);
-    EXPECT_EQ(conf["test"]["table"][0].get<int>(), 1);
-    EXPECT_EQ(conf["test"]["map"]["key"].value, "value");
-    EXPECT_EQ(conf["test"]["map"]["key1"]["key2"].value, "value2");
+    EXPECT_EQ(conf["test"]["table"][1].getNumber(), 2);
+    EXPECT_EQ(conf["test"]["table"][0].getNumber(), 1);
+    EXPECT_EQ(conf["test"]["map"]["key"].getString(), "value");
+    EXPECT_EQ(conf["test"]["map"]["key1"]["key2"].getString(), "value2");
 
-    EXPECT_EQ(conf["test"].comment, "commment line");
+    EXPECT_EQ(conf["test"].getComment(), "commment line");
 }
 
 GTEST_TEST(configator, test4) {
@@ -85,11 +84,11 @@ GTEST_TEST(configator, test4) {
     mblet::Configator conf;
     conf.readString(strConf);
 
-    EXPECT_EQ(conf["grandfather"]["father"]["child"]["0"].get<int>(), 0);
-    EXPECT_EQ(conf["grandfather"]["father"]["child"]["1"].get<int>(), -42);
-    EXPECT_EQ(conf["grandfather"]["father"]["child"]["2"].get<int>(), 66);
-    EXPECT_EQ(conf["grandfather"]["father"]["child"]["3"].get<int>(), 5);
-    EXPECT_EQ(conf["grandfather"]["father"]["child"]["4"].get<int>(), 34);
+    EXPECT_EQ(conf["grandfather"]["father"]["child"]["0"].getNumber(), 0);
+    EXPECT_EQ(conf["grandfather"]["father"]["child"]["1"].getNumber(), -42.42);
+    EXPECT_EQ(conf["grandfather"]["father"]["child"]["2"].getNumber(), 66);
+    EXPECT_EQ(conf["grandfather"]["father"]["child"]["3"].getNumber(), 5);
+    EXPECT_EQ(conf["grandfather"]["father"]["child"]["4"].getNumber(), 34);
     EXPECT_EQ(conf["grandmother"]["mother"]["child"]["5"].get<std::string>(), "42");
 }
 
@@ -103,10 +102,10 @@ GTEST_TEST(configator, test5) {
     mblet::Configator conf;
     conf.readString(strConf);
 
-    EXPECT_EQ(conf["test"]["32[\\]"].value, "\"2 ;\"#'## i\\");
-    EXPECT_EQ(conf["test"]["32[\\]"].comment, "test with comment in line");
-    EXPECT_EQ(conf["test"]["42"]["key[]"].value, "value");
-    EXPECT_EQ(conf["test"]["42"]["key[]"].comment, "comment line");
-    EXPECT_EQ(conf["test"]["42 space  "]["key[]"].value, " value space ");
-    EXPECT_EQ(conf["test"]["42 space  "]["key[]"].comment, "comment line");
+    EXPECT_EQ(conf["test"]["32[\\]"].getString(), "\"2 ;\"#'## i\\");
+    EXPECT_EQ(conf["test"]["32[\\]"].getComment(), "test with comment in line");
+    EXPECT_EQ(conf["test"]["42"]["key[]"].getString(), "value");
+    EXPECT_EQ(conf["test"]["42"]["key[]"].getComment(), "comment line");
+    EXPECT_EQ(conf["test"]["42 space  "]["key[]"].getString(), " value space ");
+    EXPECT_EQ(conf["test"]["42 space  "]["key[]"].getComment(), "comment line");
 }

@@ -25,7 +25,7 @@
 
 #include <list>
 
-#include "configator.hpp"
+#include "mblet/configator.hpp"
 
 namespace mblet {
 
@@ -137,22 +137,22 @@ static void s_recurseDump(std::ostream& oss, const Configator::Map& map, std::si
         if (itSection->second.empty()) {
             s_printDump(oss, itSection->first);
             oss << " = ";
-            s_printDump(oss, itSection->second.value);
-            s_printCommentDump(oss, itSection->second.comment);
+            s_printDump(oss, itSection->second.getString());
+            s_printCommentDump(oss, itSection->second.getComment());
             oss << '\n';
         }
     }
     for (itSection = map.begin(); itSection != map.end(); ++itSection) {
         if (itSection->second.size() > 0) {
-            if (!itSection->second.value.empty()) {
+            if (!itSection->second.getString().empty()) {
                 s_printDump(oss, itSection->first);
                 oss << " = ";
-                s_printDump(oss, itSection->second.value);
+                s_printDump(oss, itSection->second.getString());
                 oss << '\n';
             }
             s_sectionDump(oss, itSection->first, sectionIndex);
             oss << '\n';
-            s_sectionCommentDump(oss, itSection->second.comment);
+            s_sectionCommentDump(oss, itSection->second.getComment());
             s_recurseDump(oss, itSection->second, sectionIndex + 1);
         }
     }
@@ -642,19 +642,22 @@ void Configator::parseStream(std::istream& stream) {
         if (s_emptyOrComment(line, &comment)) {
             if (!comment.empty()) {
                 Configator::Map& map = s_section(_mapConfig, sections);
-                if (!map.comment.empty()) {
-                    map.comment.append("\n");
+                map._isExist = true;
+                if (!map._comment.empty()) {
+                    map._comment.append("\n");
                 }
-                map.comment.append(comment);
+                map._comment.append(comment);
             }
         }
         else if (s_parseSections(line, &sections, &comment)) {
             Configator::Map& map = s_section(_mapConfig, sections);
-            map.comment = comment;
+            map._isExist = true;
+            map._comment = comment;
         }
         else if (s_parseSectionLevel(line, &sections, &comment)) {
             Configator::Map& map = s_section(_mapConfig, sections);
-            map.comment = comment;
+            map._isExist = true;
+            map._comment = comment;
         }
         else if (s_parseKey(line, &keys, &value, &comment)) {
             Configator::Map& map = s_section(_mapConfig, sections);
@@ -672,7 +675,7 @@ void Configator::parseStream(std::istream& stream) {
                 }
             }
             *tmpMap = value;
-            tmpMap->comment = comment;
+            tmpMap->_comment = comment;
         }
     }
 }

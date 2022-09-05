@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "configator.hpp"
+#include "mblet/configator.hpp"
 #include "fileGuard.hpp"
 
 GTEST_TEST(isRead, success) {
