@@ -174,12 +174,12 @@ class Configator {
             }
         }
 
-        const double& getNumber() const {
+        double getNumber() const {
             return _number;
         }
 
-        const double& getNumber(const double& defaultValue) const {
-            if (_isExist) {
+        double getNumber(double defaultValue) const {
+            if (_isExist && _isNumber) {
                 return _number;
             }
             else {
@@ -187,12 +187,12 @@ class Configator {
             }
         }
 
-        const bool& getBoolean() const {
+        bool getBoolean() const {
             return _boolean;
         }
 
-        const bool& getBoolean(const bool& defaultValue) const {
-            if (_isExist) {
+        bool getBoolean(const bool& defaultValue) const {
+            if (_isExist && _isBoolean) {
                 return _boolean;
             }
             else {
@@ -200,7 +200,15 @@ class Configator {
             }
         }
 
-        const bool& isExist() const {
+        bool isBoolean() const {
+            return _isBoolean;
+        }
+
+        bool isNumber() const {
+            return _isNumber;
+        }
+
+        bool isExist() const {
             return _isExist;
         }
 
@@ -257,7 +265,7 @@ class Configator {
             return getString().c_str();
         }
 
-        operator const bool&() const {
+        operator bool() const {
             return getBoolean();
         }
 

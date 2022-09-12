@@ -124,11 +124,6 @@ static bool s_octal(const std::string& value, std::ostream& stringStream) {
 }
 
 static bool s_double(const std::string& value, std::ostream& stringStream) {
-    std::size_t index = 0;
-
-    if (value[index] == '-' || value[index] == '+') {
-        ++index;
-    }
     char *endPtr = NULL;
     stringStream << strtod(value.c_str(), &endPtr);
     if (endPtr != NULL && endPtr[0] != '\0') {
