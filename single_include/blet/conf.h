@@ -46,7 +46,7 @@
  * dict.h
  *
  * Licensed under the MIT License <http://opensource.org/licenses/MIT>.
- * Copyright (c) 2022-2023 BLET Mickaël.
+ * Copyright (c) 2023 BLET Mickaël.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -466,10 +466,10 @@ class Dict {
          * @param value A map.
          */
         template<typename T>
-        inline void extendToObject(const std::map<std::string, T>& value) {
-            typename std::map<std::string, T>::const_iterator it;
+        inline void extendToObject(const std::map<object_t::key_type, T>& value) {
+            typename std::map<object_t::key_type, T>::const_iterator it;
             for (it = value.begin(); it != value.end(); ++it) {
-                _object->insert(std::pair<std::string, Dict>(it->first, it->second));
+                _object->insert(object_t::value_type(it->first, it->second));
             }
         }
 
@@ -2215,7 +2215,7 @@ class Dict {
      * @return std::size_t Index of start of first occurrence.
      * @throw AccessException if dict type is not a string.
      */
-    inline std::size_t find(const string_t& __str, std::size_t __pos = 0) const {
+    inline std::size_t string_find(const string_t& __str, std::size_t __pos = 0) const {
         return getString().find(__str, __pos);
     }
 
@@ -2231,7 +2231,7 @@ class Dict {
      * @return std::size_t Index of start of first occurrence.
      * @throw AccessException if dict type is not a string.
      */
-    inline std::size_t find(const char* __str, std::size_t __pos = 0) const {
+    inline std::size_t string_find(const char* __str, std::size_t __pos = 0) const {
         return getString().find(__str, __pos);
     }
 
@@ -3839,7 +3839,7 @@ class Dict {
     }
 
     /**
-     * @brief get const dict from @p index
+     * @brief Get const dict from @p index
      *
      * @param index
      * @return const Dict&
@@ -3858,7 +3858,7 @@ class Dict {
     }
 
     /**
-     * @brief check if array contains a @p index
+     * @brief Check if array contains a @p index
      *
      * @param index
      * @return true if array has index else false
@@ -3870,6 +3870,21 @@ class Dict {
             throw AccessException(*this, "is not a array");
         }
         return static_cast<std::size_t>(index) < _value.getArray().size();
+    }
+
+    /**
+     * @brief Check if array contains a @p index and @p type
+     *
+     * @param index
+     * @return true if array has index else false
+     * @throw AccessException if dict type is not a array
+     */
+    template<typename T>
+    inline bool contains(const T& index, const EType& type) const {
+        if (!isArray()) {
+            throw AccessException(*this, "is not a array");
+        }
+        return static_cast<std::size_t>(index) < _value.getArray().size() && _value.getArray()[index]._type == type;
     }
 
     /**
@@ -4225,7 +4240,7 @@ class Dict {
      * @throw AccessException if dict type is not null and not a object.
      */
     template<typename T>
-    inline Dict& operator=(const std::map<std::string, T>& value) {
+    inline Dict& operator=(const std::map<object_t::key_type, T>& value) {
         newObject();
         _value.extendToObject(value);
         return *this;
@@ -4239,7 +4254,7 @@ class Dict {
      * @throw AccessException if dict type is not null and not a object.
      */
     template<typename T>
-    inline Dict& operator+=(const std::map<std::string, T>& value) {
+    inline Dict& operator+=(const std::map<object_t::key_type, T>& value) {
         createObject();
         _value.extendToObject(value);
         return *this;
@@ -4276,7 +4291,7 @@ class Dict {
      * @throw AccessException if dict type is not null and not a object.
      */
     template<typename T>
-    inline void newObject(const std::map<std::string, T>& value) {
+    inline void newObject(const std::map<object_t::key_type, T>& value) {
         newObject();
         _value.extendToObject(value);
     }
@@ -4296,7 +4311,7 @@ class Dict {
         if (it != _value.getObject().end()) {
             return it->second;
         }
-        return _value.getObject().insert(std::pair<std::string, Dict>(key, Dict())).first->second;
+        return _value.getObject().insert(object_t::value_type(key, Dict())).first->second;
     }
 
     /**
@@ -4385,7 +4400,7 @@ class Dict {
     }
 
     /**
-     * @brief check if object contains a @p key
+     * @brief Check if object contains a @p key
      *
      * @param key
      * @return true if object has key else false
@@ -4396,7 +4411,7 @@ class Dict {
     }
 
     /**
-     * @brief check if object contains a @p key
+     * @brief Check if object contains a @p key
      *
      * @param key
      * @return true if object has key else false
@@ -4405,6 +4420,44 @@ class Dict {
     template<std::size_t Size>
     inline bool contains(const char (&key)[Size]) const {
         return contains(std::string(key));
+    }
+
+    /**
+     * @brief Check if object contains a @p key and @p type
+     *
+     * @param key
+     * @return true if object has key else false
+     * @throw AccessException if dict type is not a object
+     */
+    inline bool contains(const std::string& key, const EType& type) const {
+        if (!isObject()) {
+            throw AccessException(*this, "is not a object");
+        }
+        object_t::const_iterator cit = _value.getObject().find(key);
+        return cit != _value.getObject().end() && cit->second._type == type;
+    }
+
+    /**
+     * @brief Check if object contains a @p key and @p type
+     *
+     * @param key
+     * @return true if object has key else false
+     * @throw AccessException if dict type is not a object
+     */
+    inline bool contains(const char* key, const EType& type) const {
+        return contains(std::string(key), type);
+    }
+
+    /**
+     * @brief Check if object contains a @p key and @p type
+     *
+     * @param key
+     * @return true if object has key else false
+     * @throw AccessException if dict type is not a object
+     */
+    template<std::size_t Size>
+    inline bool contains(const char (&key)[Size], const EType& type) const {
+        return contains(std::string(key), type);
     }
 
     /**
@@ -4464,7 +4517,7 @@ class Dict {
      * @throw AccessException if dict type is not null or not a object
      */
     template<std::size_t Size>
-    inline Dict& at(const char* (&key)[Size]) {
+    inline Dict& at(const char (&key)[Size]) {
         return getObject().at(key);
     }
 
@@ -4477,7 +4530,7 @@ class Dict {
      * @throw AccessException if dict type is not a object
      */
     template<std::size_t Size>
-    inline const Dict& at(const char* (&key)[Size]) const {
+    inline const Dict& at(const char (&key)[Size]) const {
         return getObject().at(key);
     }
 
@@ -4505,22 +4558,11 @@ class Dict {
     }
 
     /**
-     * @brief Finds the number of elements with given key.
-     * This function only makes sense for multimaps;
-     * for map the result will either be 0 (not present) or 1 (present).
-     *
-     * @param __x Key of (key, value) pairs to be located.
-     * @return std::size_t Number of elements with specified key.
-     */
-    inline std::size_t count(const std::string& __x) const {
-        return getObject().count(__x);
-    }
-
-    /**
      * @brief Return a read/write iterator that points one past the last pair in
      * the %map. Iteration is done in ascending order according to the keys.
      *
      * @return object_t::iterator
+     * @throw AccessException if dict type is not null or not a object
      */
     inline object_t::iterator object_end() {
         return getObject().end();
@@ -4532,39 +4574,10 @@ class Dict {
      * the keys.
      *
      * @return object_t::const_iterator
+     * @throw AccessException if dict type is not a object
      */
     inline object_t::const_iterator object_end() const {
         return getObject().end();
-    }
-
-    /**
-     * @brief Finds a subsequence matching given key.
-     * This function is equivalent to std::make_pair(c.lower_bound(val),
-     * c.upper_bound(val)) (but is faster than making the calls separately). This
-     * function probably only makes sense for multimaps.
-     *
-     * @param __x Key of (key, value) pairs to be located.
-     * @return std::pair<object_t::iterator, object_t::iterator>
-     * Pair of iterators that possibly points to the subsequence matching given
-     * key.
-     */
-    inline std::pair<object_t::iterator, object_t::iterator> equal_range(const std::string& __x) {
-        return getObject().equal_range(__x);
-    }
-
-    /**
-     * @brief Finds a subsequence matching given key.
-     * This function is equivalent to std::make_pair(c.lower_bound(val),
-     * c.upper_bound(val)) (but is faster than making the calls separately). This
-     * function probably only makes sense for multimaps.
-     *
-     * @param __x Key of (key, value) pairs to be located.
-     * @return std::pair<object_t::const_iterator, object_t::const_iterator>
-     * Pair of read-only (constant) iterators that possibly points to the
-     * subsequence matching given key.
-     */
-    inline std::pair<object_t::const_iterator, object_t::const_iterator> equal_range(const std::string& __x) const {
-        return getObject().equal_range(__x);
     }
 
     /**
@@ -4575,6 +4588,7 @@ class Dict {
      * way. Managing the pointer is the user's responsibility.
      *
      * @param __position An iterator pointing to the element to be erased.
+     * @throw AccessException if dict type is not null or not a object
      */
     inline void erase(object_t::iterator __position) {
         getObject().erase(__position);
@@ -4590,6 +4604,7 @@ class Dict {
      *
      * @param __x Key of element to be erased.
      * @return std::size_t The number of elements erased.
+     * @throw AccessException if dict type is not null or not a object
      */
     inline std::size_t erase(const std::string& __x) {
         return getObject().erase(__x);
@@ -4605,6 +4620,7 @@ class Dict {
      *
      * @param __first Iterator pointing to the start of the range to be erased.
      * @param __last Iterator pointing to the end of the range to be erased.
+     * @throw AccessException if dict type is not null or not a object
      */
     inline void erase(object_t::iterator __first, object_t::iterator __last) {
         getObject().erase(__first, __last);
@@ -4620,6 +4636,7 @@ class Dict {
      * @param __x Key of (key, value) %pair to be located.
      * @return object_t::iterator Iterator pointing to sought-after element, or
      * end() if not found.
+     * @throw AccessException if dict type is not null or not a object
      */
     inline object_t::iterator find(const std::string& __x) {
         return getObject().find(__x);
@@ -4635,6 +4652,7 @@ class Dict {
      * @param __x Key of (key, value) %pair to be located.
      * @return object_t::const_iterator Read-only (constant) iterator pointing to
      * sought-after element, or end() if not found.
+     * @throw AccessException if dict type is not a object
      */
     inline object_t::const_iterator find(const std::string& __x) const {
         return getObject().find(__x);
@@ -4642,6 +4660,7 @@ class Dict {
 
     /**
      * @brief Return copy of allocator used to construct this object.
+     * @throw AccessException if dict type is not a object
      */
     inline object_t::allocator_type object_get_allocator() const {
         return getObject().get_allocator();
@@ -4660,6 +4679,7 @@ class Dict {
      * of which the first element is an iterator that points to the possibly
      * inserted pair, and the second is a bool that is true if the pair was
      * actually inserted.
+     * @throw AccessException if dict type is not null or not a object
      */
     inline std::pair<object_t::iterator, bool> insert(const object_t::value_type& __x) {
         return getObject().insert(__x);
@@ -4686,6 +4706,7 @@ class Dict {
      * pairs).
      * @return object_t::iterator An iterator that points to the element with
      * key of @a __x (may or may not be the %pair passed in).
+     * @throw AccessException if dict type is not null or not a object
      */
     inline object_t::iterator insert(object_t::iterator __position, const object_t::value_type& __x) {
         return getObject().insert(__position, __x);
@@ -4697,7 +4718,7 @@ class Dict {
      *
      * @param __first Iterator pointing to the start of the range to be inserted.
      * @param __last Iterator pointing to the end of the range.
-     *
+     * @throw AccessException if dict type is not null or not a object
      */
     template<typename _InputIterator>
     inline void insert(_InputIterator __first, _InputIterator __last) {
@@ -4707,6 +4728,7 @@ class Dict {
     /**
      * @return object_t::key_compare key comparison object out of which the %map
      * was constructed.
+     * @throw AccessException if dict type is not a object
      */
     inline object_t::key_compare key_comp() const {
         return getObject().key_comp();
@@ -4722,6 +4744,7 @@ class Dict {
      * @param __x Key of (key, value) pair to be located.
      * @return object_t::iterator Iterator pointing to first element equal to or
      * greater than key, or end().
+     * @throw AccessException if dict type is not null or not a object
      */
     inline object_t::iterator lower_bound(const std::string& __x) {
         return getObject().lower_bound(__x);
@@ -4737,6 +4760,7 @@ class Dict {
      * @param __x Key of (key, value) pair to be located.
      * @return object_t::const_iterator Read-only (constant) iterator pointing to
      * first element equal to or greater than key, or end().
+     * @throw AccessException if dict type is not a object
      */
     inline object_t::const_iterator lower_bound(const std::string& __x) const {
         return getObject().lower_bound(__x);
@@ -4745,6 +4769,7 @@ class Dict {
     /**
      * @brief Returns a read/write reverse iterator that points to the last pair
      * in the %map. Iteration is done in descending order according to the keys.
+     * @throw AccessException if dict type is not null or not a object
      */
     inline object_t::reverse_iterator object_rbegin() {
         return getObject().rbegin();
@@ -4754,6 +4779,7 @@ class Dict {
      * @brief Returns a read-only (constant) reverse iterator that points to the
      * last pair in the %map. Iteration is done in descending order according to
      * the keys.
+     * @throw AccessException if dict type is not a object
      */
     inline object_t::const_reverse_iterator object_rbegin() const {
         return getObject().rbegin();
@@ -4763,6 +4789,7 @@ class Dict {
      * @brief Returns a read/write reverse iterator that points to one before the
      * first pair in the %map. Iteration is done in descending order according to
      * the keys.
+     * @throw AccessException if dict type is not null or not a object
      */
     inline object_t::reverse_iterator object_rend() {
         return getObject().rend();
@@ -4772,6 +4799,7 @@ class Dict {
      * @brief Returns a read-only (constant) reverse iterator that points
      * to one before the first pair in the %map.
      * Iteration is done in descending order according to the keys.
+     * @throw AccessException if dict type is not a object
      */
     inline object_t::const_reverse_iterator object_rend() const {
         return getObject().rend();
@@ -4783,6 +4811,7 @@ class Dict {
      * @param __x Key of (key, value) pair to be located.
      * @return object_t::iterator Iterator pointing to the first element greater
      * than key, or end().
+     * @throw AccessException if dict type is not null or not a object
      */
     inline object_t::iterator upper_bound(const std::string& __x) {
         return getObject().upper_bound(__x);
@@ -4794,6 +4823,7 @@ class Dict {
      * @param __x Key of (key, value) pair to be located.
      * @return object_t::const_iterator Read-only (constant) iterator pointing to
      * first iterator greater than key, or end().
+     * @throw AccessException if dict type is not a object
      */
     inline object_t::const_iterator upper_bound(const std::string& __x) const {
         return getObject().upper_bound(__x);
@@ -4802,6 +4832,7 @@ class Dict {
     /**
      * @brief Returns a value comparison object, built from the key comparison
      * object out of which the %map was constructed.
+     * @throw AccessException if dict type is not a object
      */
     inline object_t::value_compare value_comp() const {
         return getObject().value_comp();
@@ -4863,7 +4894,7 @@ class Dict {
                 }
             }
             else if (cit->isNumber() && pdict->isArray()) {
-                if (cit->_value.getNumber() <= pdict->_value.getArray().size()) {
+                if (cit->_value.getNumber() < pdict->_value.getArray().size()) {
                     pdict = &(pdict->_value.getArray().at(cit->_value.getNumber()));
                 }
                 else {
@@ -4901,7 +4932,7 @@ class Dict {
                 }
             }
             else if (pdict->isArray() && cit->isNumber()) {
-                if (cit->_value.getNumber() <= pdict->_value.getArray().size()) {
+                if (cit->_value.getNumber() < pdict->_value.getArray().size()) {
                     pdict = &pdict->_value.getArray().at(cit->_value.getNumber());
                 }
                 else {
@@ -5275,7 +5306,7 @@ class Dict {
             case STRING_TYPE:
             case ARRAY_TYPE:
             case OBJECT_TYPE:
-                throw MethodException(*this, "operator+");
+                throw MethodException(*this, "operator-");
                 break;
             case BOOLEAN_TYPE:
                 ret = -_value.getBoolean();
@@ -5489,22 +5520,27 @@ class Dict {
         return ret;
     }
 
-    // Dict operator~() const {
-    //     Dict ret;
-    //     switch (_type) {
-    //         case NULL_TYPE:
-    //         case ARRAY_TYPE:
-    //         case OBJECT_TYPE:
-    //         case STRING_TYPE:
-    //         case BOOLEAN_TYPE:
-    //             throw MethodException(*this, "operator~");
-    //             break;
-    //         case NUMBER_TYPE:
-    //             ret = ~static_cast<long>(_value.getNumber());
-    //             break;
-    //     }
-    //     return ret;
-    // }
+    /**
+     * @brief Use operator ~ if exist.
+     *
+     * @return Dict A new Dict.
+     */
+    inline Dict operator~() const {
+        Dict ret;
+        switch (_type) {
+            case NULL_TYPE:
+            case ARRAY_TYPE:
+            case OBJECT_TYPE:
+            case STRING_TYPE:
+            case BOOLEAN_TYPE:
+                throw MethodException(*this, "operator~");
+                break;
+            case NUMBER_TYPE:
+                ret = ~static_cast<long>(_value.getNumber());
+                break;
+        }
+        return ret;
+    }
 
     /**
      * @brief Use operator & if exist.
@@ -5527,7 +5563,7 @@ class Dict {
                 ret = _value.getBoolean() & value;
                 break;
             case NUMBER_TYPE:
-                ret = _value.getNumber() & value;
+                ret = static_cast<long>(_value.getNumber()) & value;
                 break;
         }
         return ret;
@@ -5554,7 +5590,7 @@ class Dict {
                 ret = _value.getBoolean() | value;
                 break;
             case NUMBER_TYPE:
-                ret = _value.getNumber() | value;
+                ret = static_cast<long>(_value.getNumber()) | value;
                 break;
         }
         return ret;
@@ -5581,7 +5617,7 @@ class Dict {
                 ret = _value.getBoolean() ^ value;
                 break;
             case NUMBER_TYPE:
-                ret = _value.getNumber() ^ value;
+                ret = static_cast<long>(_value.getNumber()) ^ value;
                 break;
         }
         return ret;
@@ -5689,7 +5725,7 @@ class Dict {
         std::map<T, U> ret;
         if (isArray()) {
             for (std::size_t i = 0; i < _value.getArray().size(); ++i) {
-                ret.insert(std::pair<T, U>(i, (*_value._array)[i]));
+                ret.insert(std::pair<T, U>(i, _value.getArray()[i]));
             }
         }
         return ret;
@@ -5731,12 +5767,12 @@ class Dict {
         switch (_type) {
             case ARRAY_TYPE:
                 for (std::size_t i = 0; i < _value.getArray().size(); ++i) {
-                    ret.insert(_value.getArray()[i]);
+                    ret.insert(static_cast<T>(_value.getArray()[i]));
                 }
                 break;
             case OBJECT_TYPE:
                 for (object_t::const_iterator it = _value.getObject().begin(); it != _value.getObject().end(); ++it) {
-                    ret.insert(it->second);
+                    ret.insert(static_cast<T>(it->second));
                 }
                 break;
             default:
@@ -5756,12 +5792,12 @@ class Dict {
         switch (_type) {
             case ARRAY_TYPE:
                 for (std::size_t i = 0; i < _value.getArray().size(); ++i) {
-                    ret.insert(_value.getArray()[i]);
+                    ret.push(_value.getArray()[i]);
                 }
                 break;
             case OBJECT_TYPE:
                 for (object_t::const_iterator it = _value.getObject().begin(); it != _value.getObject().end(); ++it) {
-                    ret.insert(it->second);
+                    ret.push(it->second);
                 }
                 break;
             default:
@@ -5999,10 +6035,9 @@ blet::Dict loadData(const void* data, std::size_t size);
 
 #include <fstream> // std::ifstream
 #include <iomanip> // std::setprecision
-#include <iostream>
-#include <limits> // std::numeric_limits
+#include <limits>  // std::numeric_limits
 
-#define BLET_CONF_REPLACE_BACKSLASH (-42)
+#define BLET_CONF_REPLACE_BACKSLASH static_cast<char>(-42)
 
 namespace blet {
 
@@ -6019,7 +6054,7 @@ inline LoadException::LoadException(const std::string& filename, const std::stri
     if (!_filename.empty()) {
         oss << _filename << ": ";
     }
-    oss << '(' << _message << ").";
+    oss << '(' << _message << ")";
     _what = oss.str();
 }
 
@@ -6035,7 +6070,7 @@ inline LoadException::LoadException(const std::string& filename, std::size_t lin
     if (!_filename.empty()) {
         oss << _filename << ':';
     }
-    oss << _line << ':' << _column << " (" << _message << ").";
+    oss << _line << ':' << _column << " (" << _message << ")";
     _what = oss.str();
 }
 
@@ -6082,14 +6117,29 @@ struct ConfDumpInfo {
     std::size_t index;
 };
 
+// -----------------------------------------------------------------------------
+// .................................
+// .#####...##..##..##...##..#####..
+// .##..##..##..##..###.###..##..##.
+// .##..##..##..##..##.#.##..#####..
+// .##..##..##..##..##...##..##.....
+// .#####....####...##...##..##.....
+// .................................
+// -----------------------------------------------------------------------------
+
 static inline bool s_forceKeyString(const std::string& str) {
     bool ret = false;
-    for (std::size_t i = 0; i < str.size(); ++i) {
-        if (str[i] == ' ' || str[i] == '=' || str[i] == ';' || str[i] == '#' || str[i] == '[' || str[i] == ']' ||
-            str[i] == '"' || str[i] == '\'' || str[i] == '\a' || str[i] == '\b' || str[i] == '\f' || str[i] == '\r' ||
-            str[i] == '\t' || str[i] == '\v' || str[i] == '\\') {
-            ret = true;
-            break;
+    if (str.empty()) {
+        ret = true;
+    }
+    else {
+        for (std::size_t i = 0; i < str.size(); ++i) {
+            if (str[i] == ' ' || str[i] == '=' || str[i] == ',' || str[i] == ';' || str[i] == '#' || str[i] == '[' ||
+                str[i] == ']' || str[i] == '"' || str[i] == '\'' || str[i] == '\a' || str[i] == '\b' ||
+                str[i] == '\f' || str[i] == '\r' || str[i] == '\t' || str[i] == '\v' || str[i] == '\\') {
+                ret = true;
+                break;
+            }
         }
     }
     return ret;
@@ -6135,13 +6185,13 @@ static inline void s_stringEscape(std::ostream& oss, const std::string& str) {
     }
 }
 
-static inline void s_newlineDump(std::ostream& oss, const blet::Dict& dict, std::size_t indent) {
-    if (indent != 0) {
+static inline void s_newlineDump(ConfDumpInfo& info, const blet::Dict& dict) {
+    if (info.indent != 0) {
         if (dict.getType() == blet::Dict::OBJECT_TYPE && !dict.getValue().getObject().empty()) {
-            oss << '\n';
+            info.os << '\n';
         }
         if (dict.getType() == blet::Dict::ARRAY_TYPE && !dict.getValue().getArray().empty()) {
-            oss << '\n';
+            info.os << '\n';
         }
     }
 }
@@ -6152,85 +6202,65 @@ static inline void s_indentDump(ConfDumpInfo& info) {
     }
 }
 
-static inline void s_nullDump(std::ostream& oss, const blet::Dict& /*conf*/) {
-    oss.write("null", sizeof("null") - 1);
+static inline void s_nullDump(ConfDumpInfo& info, const blet::Dict& /*dict*/) {
+    info.os << "null";
 }
 
-static inline void s_numberDump(std::ostream& oss, const blet::Dict& dict) {
-    oss << dict.getValue().getNumber();
+static inline void s_numberDump(ConfDumpInfo& info, const blet::Dict& dict) {
+    info.os << dict.getValue().getNumber();
 }
 
-static inline void s_booleanDump(std::ostream& oss, const blet::Dict& dict) {
+static inline void s_booleanDump(ConfDumpInfo& info, const blet::Dict& dict) {
     if (dict.getBoolean()) {
-        oss.write("true", sizeof("true") - 1);
+        info.os << "true";
     }
     else {
-        oss.write("false", sizeof("false") - 1);
+        info.os << "false";
     }
 }
 
-static inline void s_stringDump(std::ostream& oss, const blet::Dict& dict) {
-    oss << '"';
-    s_stringEscape(oss, dict.getValue().getString());
-    oss << '"';
+static inline void s_stringDump(ConfDumpInfo& info, const blet::Dict& dict) {
+    info.os << '"';
+    s_stringEscape(info.os, dict.getValue().getString());
+    info.os << '"';
 }
 
-static void s_typeDump(ConfDumpInfo& info, const blet::Dict& dict);
+// -----------------------------------------------------------------------------
+// .........................................................................
+// .######...####....####...##..##..........#####...##..##..##...##..#####..
+// .....##..##......##..##..###.##..........##..##..##..##..###.###..##..##.
+// .....##...####...##..##..##.###..........##..##..##..##..##.#.##..#####..
+// .##..##......##..##..##..##..##..........##..##..##..##..##...##..##.....
+// ..####....####....####...##..##..........#####....####...##...##..##.....
+// .........................................................................
+// -----------------------------------------------------------------------------
 
-static void s_objectDump(ConfDumpInfo& info, const blet::Dict& dict);
+static void s_jsonDumpType(ConfDumpInfo& info, const blet::Dict& dict);
 
-static void s_arrayDump(ConfDumpInfo& info, const std::string& key, const blet::Dict& dict);
-
-static inline void s_arrayValueDump(ConfDumpInfo& info, const blet::Dict& dict) {
-    info.index++;
-    for (std::size_t i = 0; i < dict.getValue().getArray().size(); ++i) {
-        switch (dict.getValue().getArray()[i].getType()) {
-            case blet::Dict::ARRAY_TYPE:
-                s_indentDump(info);
-                info.os << "[\n";
-                s_arrayValueDump(info, dict.getValue().getArray()[i]);
-                s_indentDump(info);
-                info.os << "]\n";
-                break;
-            case blet::Dict::OBJECT_TYPE:
-                s_indentDump(info);
-                info.os << "{\n";
-                info.index++;
-                s_objectDump(info, dict.getValue().getArray()[i]);
-                info.index--;
-                s_indentDump(info);
-                info.os << "}\n";
-                break;
-            case blet::Dict::STRING_TYPE:
-                s_indentDump(info);
-                info.os << '"';
-                s_stringEscape(info.os, dict.getValue().getArray()[i]);
-                info.os << '"';
-                info.os << '\n';
-                break;
-            default:
-                s_indentDump(info);
-                s_typeDump(info, dict.getValue().getArray()[i]);
-                info.os << '\n';
-                break;
-        }
+static inline void s_jsonDumpObject(ConfDumpInfo& info, const blet::Dict& dict) {
+    if (dict.getValue().getObject().empty()) {
+        info.os << "{}";
     }
-    info.index--;
-}
-
-inline void s_arrayDump(ConfDumpInfo& info, const std::string& key, const blet::Dict& dict) {
-    if (info.style == CONF_STYLE) {
-        for (std::size_t i = 0; i < dict.getValue().getArray().size(); ++i) {
+    else {
+        info.os << '{';
+        s_newlineDump(info, dict);
+        ++info.index;
+        for (blet::Dict::object_t::const_iterator cit = dict.getValue().getObject().begin();
+             cit != dict.getValue().getObject().end(); ++cit) {
+            if (cit != dict.getValue().getObject().begin()) {
+                info.os << ',';
+                s_newlineDump(info, dict);
+            }
+            // key
             s_indentDump(info);
-            if (s_forceKeyString(key)) {
+            if (s_forceKeyString(cit->first)) {
                 info.os << '"';
-                s_stringEscape(info.os, key);
+                s_stringEscape(info.os, cit->first);
                 info.os << '"';
             }
             else {
-                s_stringEscape(info.os, key);
+                s_stringEscape(info.os, cit->first);
             }
-            info.os << "[]";
             if (info.indent > 0) {
                 info.os << ' ';
             }
@@ -6238,35 +6268,135 @@ inline void s_arrayDump(ConfDumpInfo& info, const std::string& key, const blet::
             if (info.indent > 0) {
                 info.os << ' ';
             }
-            switch (dict.getValue().getArray()[i].getType()) {
-                case blet::Dict::ARRAY_TYPE:
-                    info.os << "[\n";
-                    s_arrayValueDump(info, dict.getValue().getArray()[i]);
-                    s_indentDump(info);
-                    info.os << "]\n";
-                    break;
-                case blet::Dict::OBJECT_TYPE:
-                    info.os << "{\n";
-                    ++info.index;
-                    s_objectDump(info, dict.getValue().getArray()[i]);
-                    --info.index;
-                    s_indentDump(info);
-                    info.os << "}\n";
-                    break;
-                case blet::Dict::STRING_TYPE:
-                    info.os << '"';
-                    s_stringEscape(info.os, dict.getValue().getArray()[i]);
-                    info.os << '"';
-                    info.os << '\n';
-                    break;
-                default:
-                    s_typeDump(info, dict.getValue().getArray()[i]);
-                    info.os << '\n';
-                    break;
-            }
+            s_jsonDumpType(info, cit->second);
         }
+        --info.index;
+        s_newlineDump(info, dict);
+        s_indentDump(info);
+        info.os << '}';
+    }
+}
+
+static inline void s_jsonDumpArray(ConfDumpInfo& info, const blet::Dict& dict) {
+    if (dict.getValue().getArray().empty()) {
+        info.os << "[]";
     }
     else {
+        info.os << '[';
+        s_newlineDump(info, dict);
+        ++info.index;
+        for (std::size_t i = 0; i < dict.getValue().getArray().size(); ++i) {
+            if (i > 0) {
+                info.os << ',';
+                s_newlineDump(info, dict);
+            }
+            // value
+            s_indentDump(info);
+            s_jsonDumpType(info, dict.getValue().getArray()[i]);
+        }
+        --info.index;
+        s_newlineDump(info, dict);
+        s_indentDump(info);
+        info.os << ']';
+    }
+}
+
+static inline void s_jsonDumpType(ConfDumpInfo& info, const blet::Dict& dict) {
+    switch (dict.getType()) {
+        case blet::Dict::NULL_TYPE:
+            s_nullDump(info, dict);
+            break;
+        case blet::Dict::BOOLEAN_TYPE:
+            s_booleanDump(info, dict);
+            break;
+        case blet::Dict::NUMBER_TYPE:
+            s_numberDump(info, dict);
+            break;
+        case blet::Dict::STRING_TYPE:
+            s_stringDump(info, dict);
+            break;
+        case blet::Dict::ARRAY_TYPE:
+            s_jsonDumpArray(info, dict);
+            break;
+        case blet::Dict::OBJECT_TYPE:
+            s_jsonDumpObject(info, dict);
+            break;
+    }
+}
+
+static inline void s_jsonDumpObjectFirst(ConfDumpInfo& info, const blet::Dict& dict) {
+    for (blet::Dict::object_t::const_iterator cit = dict.getValue().getObject().begin();
+         cit != dict.getValue().getObject().end(); ++cit) {
+        if (cit != dict.getValue().getObject().begin()) {
+            info.os << '\n';
+        }
+        // key
+        s_indentDump(info);
+        if (s_forceKeyString(cit->first)) {
+            info.os << '"';
+            s_stringEscape(info.os, cit->first);
+            info.os << '"';
+        }
+        else {
+            s_stringEscape(info.os, cit->first);
+        }
+        if (info.indent > 0) {
+            info.os << ' ';
+        }
+        info.os << '=';
+        if (info.indent > 0) {
+            info.os << ' ';
+        }
+        s_jsonDumpType(info, cit->second);
+    }
+}
+
+static inline void s_jsonDumpTypeFirst(ConfDumpInfo& info, const blet::Dict& dict) {
+    switch (dict.getType()) {
+        case blet::Dict::NULL_TYPE:
+            s_nullDump(info, dict);
+            break;
+        case blet::Dict::BOOLEAN_TYPE:
+            s_booleanDump(info, dict);
+            break;
+        case blet::Dict::NUMBER_TYPE:
+            s_numberDump(info, dict);
+            break;
+        case blet::Dict::STRING_TYPE:
+            s_stringDump(info, dict);
+            break;
+        case blet::Dict::ARRAY_TYPE:
+            info.os << "\"\"";
+            if (info.indent > 0) {
+                info.os << ' ';
+            }
+            info.os << '=';
+            if (info.indent > 0) {
+                info.os << ' ';
+            }
+            s_jsonDumpArray(info, dict);
+            break;
+        case blet::Dict::OBJECT_TYPE:
+            s_jsonDumpObjectFirst(info, dict);
+            break;
+    }
+}
+
+// -----------------------------------------------------------------------------
+// .........................................................................
+// ..####....####...##..##..######..........#####...##..##..##...##..#####..
+// .##..##..##..##..###.##..##..............##..##..##..##..###.###..##..##.
+// .##......##..##..##.###..####............##..##..##..##..##.#.##..#####..
+// .##..##..##..##..##..##..##..............##..##..##..##..##...##..##.....
+// ..####....####...##..##..##..............#####....####...##...##..##.....
+// .........................................................................
+// -----------------------------------------------------------------------------
+
+static void s_confDumpType(ConfDumpInfo& info, const blet::Dict& dict);
+
+static inline void s_confDumpArray(ConfDumpInfo& info, const std::string& key, const blet::Dict& dict) {
+    if (dict.getValue().getArray().empty()) {
+        // key
         s_indentDump(info);
         if (s_forceKeyString(key)) {
             info.os << '"';
@@ -6276,6 +6406,7 @@ inline void s_arrayDump(ConfDumpInfo& info, const std::string& key, const blet::
         else {
             s_stringEscape(info.os, key);
         }
+        // value operator
         if (info.indent > 0) {
             info.os << ' ';
         }
@@ -6283,193 +6414,159 @@ inline void s_arrayDump(ConfDumpInfo& info, const std::string& key, const blet::
         if (info.indent > 0) {
             info.os << ' ';
         }
-        info.os << "[\n";
-        s_arrayValueDump(info, dict);
-        s_indentDump(info);
-        info.os << "]\n";
-    }
-}
-
-inline void s_objectDump(ConfDumpInfo& info, const blet::Dict& dict) {
-    if (info.style == CONF_STYLE) {
-        ++info.indexSection;
-        for (blet::Dict::object_t::const_iterator cit = dict.getValue().getObject().begin();
-             cit != dict.getValue().getObject().end(); ++cit) {
-            switch (cit->second.getType()) {
-                case blet::Dict::STRING_TYPE:
-                    s_indentDump(info);
-                    if (s_forceKeyString(cit->first)) {
-                        info.os << '"';
-                        s_stringEscape(info.os, cit->first);
-                        info.os << '"';
-                    }
-                    else {
-                        s_stringEscape(info.os, cit->first);
-                    }
-
-                    if (info.indent > 0) {
-                        info.os << ' ';
-                    }
-                    info.os << '=';
-                    if (info.indent > 0) {
-                        info.os << ' ';
-                    }
-                    info.os << '"';
-                    s_stringEscape(info.os, cit->second);
-                    info.os << '"';
-                    info.os << '\n';
-                    break;
-                case blet::Dict::BOOLEAN_TYPE:
-                case blet::Dict::NUMBER_TYPE:
-                case blet::Dict::NULL_TYPE:
-                    s_indentDump(info);
-                    if (s_forceKeyString(cit->first)) {
-                        info.os << '"';
-                        s_stringEscape(info.os, cit->first);
-                        info.os << '"';
-                    }
-                    else {
-                        s_stringEscape(info.os, cit->first);
-                    }
-                    if (info.indent > 0) {
-                        info.os << ' ';
-                    }
-                    info.os << '=';
-                    if (info.indent > 0) {
-                        info.os << ' ';
-                    }
-                    s_typeDump(info, cit->second);
-                    info.os << '\n';
-                    break;
-                default:
-                    break;
-            }
-        }
-        for (blet::Dict::object_t::const_iterator cit = dict.getValue().getObject().begin();
-             cit != dict.getValue().getObject().end(); ++cit) {
-            switch (cit->second.getType()) {
-                case blet::Dict::ARRAY_TYPE:
-                    s_arrayDump(info, cit->first, cit->second);
-                    break;
-                case blet::Dict::OBJECT_TYPE:
-                    info.os << std::string(info.indexSection, '[');
-                    if (s_forceKeyString(cit->first)) {
-                        info.os << '"';
-                        s_stringEscape(info.os, cit->first);
-                        info.os << '"';
-                    }
-                    else {
-                        s_stringEscape(info.os, cit->first);
-                    }
-                    info.os << std::string(info.indexSection, ']');
-                    info.os << '\n';
-                    s_typeDump(info, cit->second);
-                    break;
-                default:
-                    break;
-            }
-        }
-        --info.indexSection;
+        info.os << "[]";
     }
     else {
-        for (blet::Dict::object_t::const_iterator cit = dict.getValue().getObject().begin();
-             cit != dict.getValue().getObject().end(); ++cit) {
-            switch (cit->second.getType()) {
-                case blet::Dict::STRING_TYPE:
-                    s_indentDump(info);
-                    if (s_forceKeyString(cit->first)) {
-                        info.os << '"';
-                        s_stringEscape(info.os, cit->first);
-                        info.os << '"';
-                    }
-                    else {
-                        s_stringEscape(info.os, cit->first);
-                    }
-                    if (info.indent > 0) {
-                        info.os << ' ';
-                    }
-                    info.os << '=';
-                    if (info.indent > 0) {
-                        info.os << ' ';
-                    }
-                    info.os << '"';
-                    s_stringEscape(info.os, cit->second);
-                    info.os << '"';
-                    info.os << '\n';
-                    break;
+        for (std::size_t i = 0; i < dict.getValue().getArray().size(); ++i) {
+            if (i > 0) {
+                info.os << '\n';
+            }
+            // key
+            s_indentDump(info);
+            if (s_forceKeyString(key)) {
+                info.os << '"';
+                s_stringEscape(info.os, key);
+                info.os << '"';
+            }
+            else {
+                s_stringEscape(info.os, key);
+            }
+            // array operator
+            info.os << "[]";
+            // value operator
+            if (info.indent > 0) {
+                info.os << ' ';
+            }
+            info.os << '=';
+            if (info.indent > 0) {
+                info.os << ' ';
+            }
+            // value
+            switch (dict.getValue().getArray()[i].getType()) {
+                case blet::Dict::NULL_TYPE:
                 case blet::Dict::BOOLEAN_TYPE:
                 case blet::Dict::NUMBER_TYPE:
-                case blet::Dict::NULL_TYPE:
-                    s_indentDump(info);
-                    if (s_forceKeyString(cit->first)) {
-                        info.os << '"';
-                        s_stringEscape(info.os, cit->first);
-                        info.os << '"';
-                    }
-                    else {
-                        s_stringEscape(info.os, cit->first);
-                    }
-                    if (info.indent > 0) {
-                        info.os << ' ';
-                    }
-                    info.os << '=';
-                    if (info.indent > 0) {
-                        info.os << ' ';
-                    }
-                    s_typeDump(info, cit->second);
-                    info.os << '\n';
+                case blet::Dict::STRING_TYPE:
+                    s_confDumpType(info, dict.getValue().getArray()[i]);
                     break;
                 case blet::Dict::ARRAY_TYPE:
-                    s_arrayDump(info, cit->first, cit->second);
+                    s_jsonDumpArray(info, dict.getValue().getArray()[i]);
                     break;
                 case blet::Dict::OBJECT_TYPE:
-                    s_indentDump(info);
-                    if (s_forceKeyString(cit->first)) {
-                        info.os << '"';
-                        s_stringEscape(info.os, cit->first);
-                        info.os << '"';
-                    }
-                    else {
-                        s_stringEscape(info.os, cit->first);
-                    }
-                    if (info.indent > 0) {
-                        info.os << ' ';
-                    }
-                    info.os << '=';
-                    if (info.indent > 0) {
-                        info.os << ' ';
-                    }
-                    info.os << "{\n";
-                    ++info.index;
-                    s_typeDump(info, cit->second);
-                    --info.index;
-                    s_indentDump(info);
-                    info.os << "}\n";
+                    s_jsonDumpObject(info, dict.getValue().getArray()[i]);
                     break;
             }
         }
     }
 }
 
-inline void s_typeDump(ConfDumpInfo& info, const blet::Dict& dict) {
+static inline void s_confDumpObject(ConfDumpInfo& info, const blet::Dict& dict) {
+    int index = 0;
+    ++info.indexSection;
+    for (blet::Dict::object_t::const_iterator cit = dict.getValue().getObject().begin();
+         cit != dict.getValue().getObject().end(); ++cit) {
+        switch (cit->second.getType()) {
+            case blet::Dict::NULL_TYPE:
+            case blet::Dict::BOOLEAN_TYPE:
+            case blet::Dict::NUMBER_TYPE:
+            case blet::Dict::STRING_TYPE:
+                if (index > 0) {
+                    info.os << '\n';
+                }
+                ++index;
+                s_indentDump(info);
+                if (s_forceKeyString(cit->first)) {
+                    info.os << '"';
+                    s_stringEscape(info.os, cit->first);
+                    info.os << '"';
+                }
+                else {
+                    s_stringEscape(info.os, cit->first);
+                }
+                if (info.indent > 0) {
+                    info.os << ' ';
+                }
+                info.os << '=';
+                if (info.indent > 0) {
+                    info.os << ' ';
+                }
+                s_confDumpType(info, cit->second);
+                break;
+            case blet::Dict::ARRAY_TYPE:
+                if (index > 0) {
+                    info.os << '\n';
+                }
+                ++index;
+                s_confDumpArray(info, cit->first, cit->second);
+                break;
+            case blet::Dict::OBJECT_TYPE:
+                break;
+        }
+    }
+    for (blet::Dict::object_t::const_iterator cit = dict.getValue().getObject().begin();
+         cit != dict.getValue().getObject().end(); ++cit) {
+        if (cit->second.getType() == blet::Dict::OBJECT_TYPE) {
+            if (index > 0) {
+                info.os << '\n';
+            }
+            ++index;
+            if (cit->second.getValue().getObject().empty()) {
+                if (s_forceKeyString(cit->first)) {
+                    info.os << '"';
+                    s_stringEscape(info.os, cit->first);
+                    info.os << '"';
+                }
+                else {
+                    s_stringEscape(info.os, cit->first);
+                }
+                if (info.indent > 0) {
+                    info.os << ' ';
+                }
+                info.os << '=';
+                if (info.indent > 0) {
+                    info.os << ' ';
+                }
+                info.os << "{}";
+            }
+            else {
+                // new section
+                info.os << std::string(info.indexSection, '[');
+                if (s_forceKeyString(cit->first)) {
+                    info.os << '"';
+                    s_stringEscape(info.os, cit->first);
+                    info.os << '"';
+                }
+                else {
+                    s_stringEscape(info.os, cit->first);
+                }
+                info.os << std::string(info.indexSection, ']');
+                info.os << '\n';
+                s_confDumpType(info, cit->second);
+            }
+        }
+    }
+    --info.indexSection;
+}
+
+static inline void s_confDumpType(ConfDumpInfo& info, const blet::Dict& dict) {
     switch (dict.getType()) {
         case blet::Dict::NULL_TYPE:
-            s_nullDump(info.os, dict);
-            break;
-        case blet::Dict::OBJECT_TYPE:
-            s_objectDump(info, dict);
-            break;
-        case blet::Dict::ARRAY_TYPE:
-            s_arrayDump(info, "", dict);
-            break;
-        case blet::Dict::STRING_TYPE:
-            s_stringDump(info.os, dict);
-            break;
-        case blet::Dict::NUMBER_TYPE:
-            s_numberDump(info.os, dict);
+            s_nullDump(info, dict);
             break;
         case blet::Dict::BOOLEAN_TYPE:
-            s_booleanDump(info.os, dict);
+            s_booleanDump(info, dict);
+            break;
+        case blet::Dict::NUMBER_TYPE:
+            s_numberDump(info, dict);
+            break;
+        case blet::Dict::STRING_TYPE:
+            s_stringDump(info, dict);
+            break;
+        case blet::Dict::ARRAY_TYPE:
+            s_confDumpArray(info, "", dict);
+            break;
+        case blet::Dict::OBJECT_TYPE:
+            s_confDumpObject(info, dict);
             break;
     }
 }
@@ -6478,7 +6575,14 @@ inline void dump(const blet::Dict& dict, std::ostream& os, std::size_t indent, c
                  enum EDumpStyle style) {
     os << std::setprecision(std::numeric_limits<double>::digits10 + 1);
     ConfDumpInfo info(os, indent, indentCharacter, style);
-    s_typeDump(info, dict);
+    switch (info.style) {
+        case CONF_STYLE:
+            s_confDumpType(info, dict);
+            break;
+        case JSON_STYLE:
+            s_jsonDumpTypeFirst(info, dict);
+            break;
+    }
 }
 
 inline std::string dump(const blet::Dict& dict, std::size_t indent, char indentCharacter, enum EDumpStyle style) {
@@ -6590,6 +6694,7 @@ static inline void s_stringReverseJumpSpace(const std::string& str, std::size_t&
 }
 
 void s_parseType(const std::string& str, ConfParseInfo& info, std::size_t& i, blet::Dict& dict);
+void s_parseJsonArray(const std::string& str, ConfParseInfo& info, std::size_t& i, blet::Dict& dict);
 
 static inline bool s_hex(const std::string& value, std::ostream& stringStream) {
     std::size_t index = 0;
@@ -6608,14 +6713,11 @@ static inline bool s_hex(const std::string& value, std::ostream& stringStream) {
             else if (value[index] >= 'a' && value[index] <= 'f') {
                 ++index;
             }
-            else if (value[index] >= 'A' && value[index] <= 'F') {
-                ++index;
-            }
             else {
                 return false;
             }
         }
-        stringStream << ::strtoll(value.c_str(), NULL, 16);
+        stringStream << ::strtol(value.c_str(), NULL, 16);
         return true;
     }
     else {
@@ -6625,12 +6727,15 @@ static inline bool s_hex(const std::string& value, std::ostream& stringStream) {
 
 static inline bool s_binary(const std::string& value, std::ostream& stringStream) {
     std::size_t index = 0;
-
+    bool sub = false;
     if (value[index] == '-' || value[index] == '+') {
+        if (value[index] == '-') {
+            sub = true;
+        }
         ++index;
     }
     // is binary
-    if (value[index] == '0' && (value[index + 1] == 'b' || value[index + 1] == 'B')) {
+    if (value[index] == '0' && value[index + 1] == 'b') {
         ++index;
         ++index;
         std::size_t start = index;
@@ -6642,7 +6747,16 @@ static inline bool s_binary(const std::string& value, std::ostream& stringStream
                 return false;
             }
         }
-        stringStream << ::strtoull(value.c_str() + start, NULL, 2);
+        if (sub) {
+            long lvalue;
+            std::stringstream ss("");
+            ss << '-' << ::strtoul(value.c_str() + start, NULL, 2);
+            ss >> lvalue;
+            stringStream << lvalue;
+        }
+        else {
+            stringStream << ::strtoul(value.c_str() + start, NULL, 2);
+        }
         return true;
     }
     else {
@@ -6657,8 +6771,7 @@ static inline bool s_octal(const std::string& value, std::ostream& stringStream)
         ++index;
     }
     // is binary
-    if (value[index] == '0' && value.find('.') == std::string::npos && value.find('e') == std::string::npos &&
-        value.find('E') == std::string::npos) {
+    if (value[index] == '0' && value.find('.') == std::string::npos && value.find('e') == std::string::npos) {
         while (value[index] != '\0') {
             if (value[index] >= '0' && value[index] <= '8') {
                 ++index;
@@ -6667,7 +6780,7 @@ static inline bool s_octal(const std::string& value, std::ostream& stringStream)
                 return false;
             }
         }
-        stringStream << ::strtoll(value.c_str(), NULL, 8);
+        stringStream << ::strtol(value.c_str(), NULL, 8);
         return true;
     }
     else {
@@ -6765,44 +6878,74 @@ static inline void s_parseValue(const std::string& str, blet::Dict& dict) {
                 dict = str;
             }
             break;
-        case '[':
-            if (lowerStr == "[]") {
-                dict.newArray();
-            }
-            else {
-                dict = str;
-            }
-            break;
         default:
             dict = str;
             break;
     }
-}
-
-static inline void s_parseObject(const std::string& str, ConfParseInfo& info, std::size_t& i, blet::Dict& dict) {
-    // parse value object
-    while (str[i] != '\0' && str[i] != '}') {
-        s_parseType(str, info, i, dict);
-    }
-    if (str[i] == '\0') {
-        throw LoadException(info.filename, info.line(i), info.column(i), "End of object value");
-    }
-    else {
-        ++i; // jump '}'
-        s_stringJumpSpaceNotNewLine(str, i);
-        if (str[i] != '\n' && str[i] != '\0') {
-            throw LoadException(info.filename, info.line(i), info.column(i), "End of object value");
-        }
+    if (dict.isString()) {
+        dict = s_replaceEscapeChar(dict.getValue().getString());
     }
 }
 
-static inline void s_parseArray(const std::string& str, ConfParseInfo& info, std::size_t& i, blet::Dict& dict) {
+static inline void s_parseJsonObject(const std::string& str, ConfParseInfo& info, std::size_t& i, blet::Dict& dict) {
+    blet::Dict* currentDict;
+    ConfParseInfo valueInfo = info;
     std::size_t start;
     std::size_t end;
+    bool next = false;
 
-    dict.newArray();
-    // parse value array
-    while (str[i] != '\0' && str[i] != ']') {
+    dict.newObject();
+    ++i; // jump '{'
+    s_stringJumpSpace(str, i);
+    while (str[i] != '}' || next) {
+        if (str[i] == '\0') {
+            throw LoadException(info.filename, info.lastLine(i), info.lastColumn(i), "End of json object value");
+        }
+        // parse key
+        if (str[i] == '=') {
+            throw LoadException(info.filename, info.line(i), info.column(i), "Key of json object value");
+        }
+        // start key name
+        if (str[i] == '\"' || str[i] == '\'') {
+            // get quote character
+            const char quote = str[i];
+            ++i; // jump quote
+            start = i;
+            // search end quote
+            while (str[i] != quote) {
+                if (str[i] == '\\' && (str[i + 1] == quote || str[i + 1] == '\\')) {
+                    ++i;
+                }
+                if (str[i] == '\0' || str[i] == '\n') {
+                    throw LoadException(info.filename, info.line(i), info.column(i),
+                                        "End of quote at key in json object value");
+                }
+                ++i;
+            }
+            end = i;
+            ++i; // jump quote
+        }
+        else {
+            start = i;
+            while (str[i] != '=') {
+                if (str[i] == '\0' || str[i] == '\n') {
+                    throw LoadException(info.filename, info.line(i), info.column(i), "End of key in json object value");
+                }
+                ++i;
+            }
+            end = i - 1;
+            s_stringReverseJumpSpace(str, end);
+            ++end;
+        }
+        currentDict = &(dict.operator[](s_replaceEscapeChar(str.substr(start, end - start))));
+        valueInfo.currentSections.push_back(currentDict);
+        s_stringJumpSpace(str, i);
+        if (str[i] != '=') {
+            throw LoadException(info.filename, info.line(i), info.column(i),
+                                "Operator = not found in json object value");
+        }
+        ++i; // jump '='
+        s_stringJumpSpace(str, i);
         // start value
         if (str[i] == '\"' || str[i] == '\'') {
             // get quote character
@@ -6815,52 +6958,121 @@ static inline void s_parseArray(const std::string& str, ConfParseInfo& info, std
                     ++i;
                 }
                 if (str[i] == '\0' || str[i] == '\n') {
-                    throw LoadException(info.filename, info.line(i), info.column(i), "End of quote");
+                    throw LoadException(info.filename, info.line(i), info.column(i),
+                                        "End of quote at value in json object value");
+                }
+                ++i;
+            }
+            end = i;
+            ++i; // jump quote
+            s_stringJumpSpace(str, i);
+            *currentDict = s_replaceEscapeChar(str.substr(start, end - start));
+        }
+        else {
+            switch (str[i]) {
+                case '{':
+                    s_parseJsonObject(str, valueInfo, i, *currentDict);
+                    break;
+                case '[':
+                    s_parseJsonArray(str, valueInfo, i, *currentDict);
+                    break;
+                default:
+                    start = i;
+                    while (str[i] != ',' && str[i] != '}' && str[i] != '\n' && str[i] != '\0') {
+                        ++i;
+                    }
+                    end = i - 1;
+                    s_stringReverseJumpSpace(str, end);
+                    ++end;
+                    s_parseValue(str.substr(start, end - start), *currentDict);
+                    break;
+            }
+        }
+        s_stringJumpSpace(str, i);
+        if (str[i] == ',') {
+            ++i; // jump ','
+            s_stringJumpSpace(str, i);
+            next = true;
+        }
+        else {
+            next = false;
+        }
+    }
+    ++i; // jump '}'
+    s_stringJumpSpace(str, i);
+}
+
+inline void s_parseJsonArray(const std::string& str, ConfParseInfo& info, std::size_t& i, blet::Dict& dict) {
+    std::size_t start;
+    std::size_t end;
+    bool next = false;
+
+    dict.newArray();
+    ++i; // jump '['
+    s_stringJumpSpace(str, i);
+    // parse value array
+    while (str[i] != ']' || next) {
+        if (str[i] == '\0') {
+            throw LoadException(info.filename, info.line(i), info.column(i), "End of json array value");
+        }
+        // start value
+        if (str[i] == '\"' || str[i] == '\'') {
+            // get quote character
+            const char quote = str[i];
+            ++i; // jump quote
+            start = i;
+            // search end quote
+            while (str[i] != quote) {
+                if (str[i] == '\\' && (str[i + 1] == quote || str[i + 1] == '\\')) {
+                    ++i;
+                }
+                if (str[i] == '\0' || str[i] == '\n') {
+                    throw LoadException(info.filename, info.line(i), info.column(i),
+                                        "End of quote in json array value");
                 }
                 ++i;
             }
             end = i;
             ++i; // jump quote
             s_stringJumpSpaceNotNewLine(str, i);
-            if (str[i] != '\n' && str[i] != '\0') {
-                throw LoadException(info.filename, info.line(i), info.column(i), "End of value");
+            if (str[i] != ',' && str[i] != ']' && str[i] != '\n' && str[i] != '\0') {
+                throw LoadException(info.filename, info.line(i), info.column(i), "End of value in json array value");
             }
-            dict.push_back(str.substr(start, end - start));
+            dict.push_back(s_replaceEscapeChar(str.substr(start, end - start)));
         }
         else {
-            start = i;
-            while (str[i] != '\n' && str[i] != '\0') {
-                ++i;
-            }
-            end = i - 1;
-            s_stringReverseJumpSpace(str, end);
-            ++end;
             dict.push_back(blet::Dict());
             info.currentSections.push_back(&(dict.back()));
-            if (end - start == 1 && str[start] == '{') {
-                s_stringJumpSpace(str, i);
-                s_parseObject(str, info, i, dict.back());
-            }
-            else if (end - start == 1 && str[start] == '[') {
-                s_stringJumpSpace(str, i);
-                s_parseArray(str, info, i, dict.back());
-            }
-            else {
-                s_parseValue(str.substr(start, end - start), dict.back());
+            switch (str[i]) {
+                case '{':
+                    s_parseJsonObject(str, info, i, dict.back());
+                    break;
+                case '[':
+                    s_parseJsonArray(str, info, i, dict.back());
+                    break;
+                default:
+                    start = i;
+                    while (str[i] != ',' && str[i] != ']' && str[i] != '\n' && str[i] != '\0') {
+                        ++i;
+                    }
+                    end = i - 1;
+                    s_stringReverseJumpSpace(str, end);
+                    ++end;
+                    s_parseValue(str.substr(start, end - start), dict.back());
             }
         }
         s_stringJumpSpace(str, i);
-    }
-    if (str[i] == '\0') {
-        throw LoadException(info.filename, info.line(i), info.column(i), "End of array value");
-    }
-    else {
-        ++i; // jump ']'
-        s_stringJumpSpaceNotNewLine(str, i);
-        if (str[i] != '\n' && str[i] != '\0') {
-            throw LoadException(info.filename, info.line(i), info.column(i), "End of array value");
+        if (str[i] == ',') {
+            ++i; // jump ','
+            s_stringJumpSpace(str, i);
+            next = true;
+        }
+        else {
+            next = false;
         }
     }
+    ++i; // jump ']'
+    s_stringJumpSpace(str, i);
 }
 
 static inline void s_parseSection(const std::string& str, ConfParseInfo& info, std::size_t& i, blet::Dict& dict) {
@@ -6888,7 +7100,7 @@ static inline void s_parseSection(const std::string& str, ConfParseInfo& info, s
                     ++i;
                 }
                 if (str[i] == '\0' || str[i] == '\n') {
-                    throw LoadException(info.filename, info.line(i), info.column(i), "End of quote");
+                    throw LoadException(info.filename, info.line(i), info.column(i), "End of quote multi section");
                 }
                 ++i;
             }
@@ -6900,7 +7112,7 @@ static inline void s_parseSection(const std::string& str, ConfParseInfo& info, s
             start = i;
             while (str[i] != ']') {
                 if (str[i] == '\0' || str[i] == '\n') {
-                    throw LoadException(info.filename, info.line(i), info.column(i), "End of section");
+                    throw LoadException(info.filename, info.line(i), info.column(i), "End of multi section");
                 }
                 ++i;
             }
@@ -6915,14 +7127,15 @@ static inline void s_parseSection(const std::string& str, ConfParseInfo& info, s
             s_stringJumpSpaceNotNewLine(str, i);
         }
         if (level != 0) {
-            throw LoadException(info.filename, info.line(i), info.column(i), "End of section");
+            throw LoadException(info.filename, info.line(i), info.column(i), "End of multi section");
         }
         --maxlevel;
         while (info.currentSections.size() > maxlevel) {
             info.currentSections.pop_back();
         }
         if (maxlevel == info.currentSections.size()) {
-            info.currentSections.push_back(&(info.currentSections.back()->operator[](str.substr(start, end - start))));
+            info.currentSections.push_back(
+                &(info.currentSections.back()->operator[](s_replaceEscapeChar(str.substr(start, end - start)))));
         }
         else {
             throw LoadException(info.filename, info.line(i), info.column(i), "Multi section without parent");
@@ -6942,7 +7155,7 @@ static inline void s_parseSection(const std::string& str, ConfParseInfo& info, s
                     ++i;
                 }
                 if (str[i] == '\0' || str[i] == '\n') {
-                    throw LoadException(info.filename, info.line(i), info.column(i), "End of quote");
+                    throw LoadException(info.filename, info.line(i), info.column(i), "End of quote section");
                 }
                 ++i;
             }
@@ -6969,7 +7182,7 @@ static inline void s_parseSection(const std::string& str, ConfParseInfo& info, s
         }
         info.currentSections.clear();
         if (end - start > 0) {
-            info.currentSections.push_back(&(dict[str.substr(start, end - start)]));
+            info.currentSections.push_back(&(dict[s_replaceEscapeChar(str.substr(start, end - start))]));
         }
         else {
             info.currentSections.push_back(&dict);
@@ -6990,19 +7203,23 @@ static inline void s_parseSection(const std::string& str, ConfParseInfo& info, s
                         ++i;
                     }
                     if (str[i] == '\0' || str[i] == '\n') {
-                        throw LoadException(info.filename, info.line(i), info.column(i), "Start of section");
+                        throw LoadException(info.filename, info.line(i), info.column(i), "End of quote linear section");
                     }
                     ++i;
                 }
                 end = i;
                 ++i; // jump quote
                 s_stringJumpSpaceNotNewLine(str, i);
+                if (str[i] != ']') {
+                    throw LoadException(info.filename, info.line(i), info.column(i), "End of linear section");
+                }
+                ++i; // jump ']'
             }
             else {
                 start = i;
                 while (str[i] != ']') {
                     if (str[i] == '\0' || str[i] == '\n') {
-                        throw LoadException(info.filename, info.line(i), info.column(i), "End of section");
+                        throw LoadException(info.filename, info.line(i), info.column(i), "End of linear section");
                     }
                     ++i;
                 }
@@ -7011,7 +7228,8 @@ static inline void s_parseSection(const std::string& str, ConfParseInfo& info, s
                 s_stringReverseJumpSpace(str, end);
                 ++end;
             }
-            info.currentSections.push_back(&(info.currentSections.back()->operator[](str.substr(start, end - start))));
+            info.currentSections.push_back(
+                &(info.currentSections.back()->operator[](s_replaceEscapeChar(str.substr(start, end - start)))));
             s_stringJumpSpaceNotNewLine(str, i);
         }
     }
@@ -7141,46 +7359,40 @@ inline void s_parseKeyValue(const std::string& str, ConfParseInfo& info, std::si
         if (str[i] != '\n' && str[i] != '\0') {
             throw LoadException(info.filename, info.line(i), info.column(i), "End of value");
         }
-        *currentDict = str.substr(start, end - start);
+        *currentDict = s_replaceEscapeChar(str.substr(start, end - start));
     }
     else {
-        start = i;
-        while (str[i] != '\n' && str[i] != '\0') {
-            ++i;
+        switch (str[i]) {
+            case '{':
+                s_parseJsonObject(str, valueInfo, i, *currentDict);
+                break;
+            case '[':
+                s_parseJsonArray(str, valueInfo, i, *currentDict);
+                break;
+            default:
+                start = i;
+                while (str[i] != '\n' && str[i] != '\0') {
+                    ++i;
+                }
+                end = i - 1;
+                s_stringReverseJumpSpace(str, end);
+                ++end;
+                s_parseValue(str.substr(start, end - start), *currentDict);
+                break;
         }
-        end = i - 1;
-        s_stringReverseJumpSpace(str, end);
-        ++end;
-        if (end - start == 1 && str[start] == '{') {
-            s_stringJumpSpace(str, i);
-            s_parseObject(str, valueInfo, i, *currentDict);
-        }
-        else if (end - start == 1 && str[start] == '[') {
-            s_stringJumpSpace(str, i);
-            s_parseArray(str, valueInfo, i, *currentDict);
-        }
-        else {
-            s_parseValue(str.substr(start, end - start), *currentDict);
-        }
-    }
-    // replace special characters
-    if (currentDict->isString()) {
-        *currentDict = s_replaceEscapeChar(currentDict->getValue().getString());
     }
     s_stringJumpSpace(str, i);
 }
 
 inline void s_parseType(const std::string& str, ConfParseInfo& info, std::size_t& i, blet::Dict& dict) {
-    switch (str[i]) {
-        case '[':
-            s_parseSection(str, info, i, dict);
-            break;
-        default:
-            if (info.currentSections.empty()) {
-                info.currentSections.push_back(&dict);
-            }
-            s_parseKeyValue(str, info, i, *(info.currentSections.back()));
-            break;
+    if (str[i] == '[') {
+        s_parseSection(str, info, i, dict);
+    }
+    else {
+        if (info.currentSections.empty()) {
+            info.currentSections.push_back(&dict);
+        }
+        s_parseKeyValue(str, info, i, *(info.currentSections.back()));
     }
 }
 
