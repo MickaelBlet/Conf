@@ -1,0 +1,6 @@
+[submodule "third/amalgamate"]
+	path = third/amalgamate
+	url = https://github.com/MickaelBlet/amalgamate.git
+[submodule "third/Dict"]
+	path = third/Dict
+	url = https://github.com/MickaelBlet/Dict.git

@@ -1,0 +1,12 @@
+{
+    "project": "CONF for C++",
+    "target": "single_include/blet/conf.h",
+    "include_paths": [
+        "include",
+        "third/Dict/include"
+    ],
+    "sources": [
+        "include/blet/conf.h",
+        "src/conf.cpp"
+    ]
+}
