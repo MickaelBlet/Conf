@@ -33,63 +33,63 @@
 #include <iomanip> // std::setprecision
 #include <limits>  // std::numeric_limits
 
-#define BLET_CONF_REPLACE_BACKSLASH static_cast<char>(-42)
-
 namespace blet {
 
 namespace conf {
 
+const char replaceBackslash = -42;
+
 LoadException::LoadException(const std::string& filename, const std::string& message) :
     std::exception(),
-    _filename(filename),
-    _message(message),
-    _line(0),
-    _column(0) {
+    filename_(filename),
+    message_(message),
+    line_(0),
+    column_(0) {
     std::ostringstream oss("");
     oss << "Parse ";
-    if (!_filename.empty()) {
-        oss << _filename << ": ";
+    if (!filename_.empty()) {
+        oss << filename_ << ": ";
     }
-    oss << '(' << _message << ")";
-    _what = oss.str();
+    oss << '(' << message_ << ")";
+    what_ = oss.str();
 }
 
 LoadException::LoadException(const std::string& filename, std::size_t line, std::size_t column,
                              const std::string& message) :
     std::exception(),
-    _filename(filename),
-    _message(message),
-    _line(line),
-    _column(column) {
+    filename_(filename),
+    message_(message),
+    line_(line),
+    column_(column) {
     std::ostringstream oss("");
     oss << "Parse at ";
-    if (!_filename.empty()) {
-        oss << _filename << ':';
+    if (!filename_.empty()) {
+        oss << filename_ << ':';
     }
-    oss << _line << ':' << _column << " (" << _message << ")";
-    _what = oss.str();
+    oss << line_ << ':' << column_ << " (" << message_ << ")";
+    what_ = oss.str();
 }
 
 LoadException::~LoadException() throw() {}
 
 const char* LoadException::what() const throw() {
-    return _what.c_str();
+    return what_.c_str();
 }
 
 const std::string& LoadException::filename() const throw() {
-    return _filename;
+    return filename_;
 }
 
 const std::string& LoadException::message() const throw() {
-    return _message;
+    return message_;
 }
 
 const std::size_t& LoadException::line() const throw() {
-    return _line;
+    return line_;
 }
 
 const std::size_t& LoadException::column() const throw() {
-    return _column;
+    return column_;
 }
 
 /**
@@ -1395,8 +1395,8 @@ static void s_replaceCommentBySpace(std::string& str) {
     // replace double backslash
     for (std::size_t i = 0; i < str.size() && str[i] != '\0'; ++i) {
         if (str[i] == '\\' && str[i + 1] == '\\') {
-            str[i] = BLET_CONF_REPLACE_BACKSLASH;
-            str[i + 1] = BLET_CONF_REPLACE_BACKSLASH;
+            str[i] = replaceBackslash;
+            str[i + 1] = replaceBackslash;
         }
     }
     for (std::size_t i = 0; i < str.size() && str[i] != '\0'; ++i) {
@@ -1424,7 +1424,7 @@ static void s_replaceCommentBySpace(std::string& str) {
     }
     // replace double backslash
     for (std::size_t i = 0; i < str.size() && str[i] != '\0'; ++i) {
-        if (str[i] == BLET_CONF_REPLACE_BACKSLASH && str[i + 1] == BLET_CONF_REPLACE_BACKSLASH) {
+        if (str[i] == replaceBackslash && str[i + 1] == replaceBackslash) {
             str[i] = '\\';
             str[i + 1] = '\\';
         }
@@ -1491,5 +1491,3 @@ blet::Dict loadData(const void* data, std::size_t size) {
 } // namespace conf
 
 } // namespace blet
-
-#undef BLET_CONF_REPLACE_BACKSLASH

@@ -23,8 +23,8 @@
  * SOFTWARE.
  */
 
-#ifndef _BLET_CONF_H_
-#define _BLET_CONF_H_
+#ifndef BLET_CONF_H_
+#define BLET_CONF_H_
 
 #include <exception> // std::exception
 #include <sstream>   // std::istream, std::ostream
@@ -51,11 +51,11 @@ class LoadException : public std::exception {
     const std::size_t& column() const throw();
 
   protected:
-    std::string _what;
-    std::string _filename;
-    std::string _message;
-    std::size_t _line;
-    std::size_t _column;
+    std::string what_;
+    std::string filename_;
+    std::string message_;
+    std::size_t line_;
+    std::size_t column_;
 };
 
 enum EDumpStyle {
@@ -70,6 +70,7 @@ enum EDumpStyle {
  * @param os A ostream.
  * @param indent Indentation of dump.
  * @param indentCharacter Indentation character.
+ * @param style Style of dump.
  */
 void dump(const blet::Dict& dict, std::ostream& os, std::size_t indent = 0, char indentCharacter = ' ',
           enum EDumpStyle style = CONF_STYLE);
@@ -80,6 +81,7 @@ void dump(const blet::Dict& dict, std::ostream& os, std::size_t indent = 0, char
  * @param dict A dict.
  * @param indent Indentation of dump.
  * @param indentCharacter Indentation character.
+ * @param style Style of dump.
  * @return std::string config string.
  */
 std::string dump(const blet::Dict& dict, std::size_t indent = 0, char indentCharacter = ' ',
@@ -89,9 +91,6 @@ std::string dump(const blet::Dict& dict, std::size_t indent = 0, char indentChar
  * @brief Parse and load a config from filename.
  *
  * @param filename A filename.
- * @param comment Option for accept the comment (style C/C++) in config.
- * @param additionalNext Option for accept the bad commat at end of config
- * object.
  * @return blet::Dict Dictionnary of config.
  */
 blet::Dict loadFile(const char* filename);
@@ -100,9 +99,6 @@ blet::Dict loadFile(const char* filename);
  * @brief Parse and load a config from stream.
  *
  * @param stream A stream.
- * @param comment Option for accept the comment (style C/C++) in config.
- * @param additionalNext Option for accept the bad commat at end of config
- * object.
  * @return blet::Dict Dictionnary of config.
  */
 blet::Dict loadStream(std::istream& stream);
@@ -111,9 +107,6 @@ blet::Dict loadStream(std::istream& stream);
  * @brief Parse and load a config from string.
  *
  * @param str A string.
- * @param comment Option for accept the comment (style C/C++) in config.
- * @param additionalNext Option for accept the bad commat at end of config
- * object.
  * @return blet::Dict Dictionnary of config.
  */
 blet::Dict loadString(const std::string& str);
@@ -123,9 +116,6 @@ blet::Dict loadString(const std::string& str);
  *
  * @param data A data.
  * @param size Size of data.
- * @param comment Option for accept the comment (style C/C++) in config.
- * @param additionalNext Option for accept the bad commat at end of config
- * object.
  * @return blet::Dict Dictionnary of config.
  */
 blet::Dict loadData(const void* data, std::size_t size);
@@ -134,4 +124,4 @@ blet::Dict loadData(const void* data, std::size_t size);
 
 } // namespace blet
 
-#endif // #ifndef _BLET_config_H_
+#endif // #ifndef BLET_CONF_H_
