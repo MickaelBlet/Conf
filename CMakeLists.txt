@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.5)
 
 add_subdirectory("third/Dict")
 
-project(blet_conf VERSION 1.0.0 LANGUAGES CXX)
+project(blet_conf VERSION 2.0.0 LANGUAGES CXX)
 
 # OPTIONS
 option(BUILD_EXAMPLE "Build example binaries" OFF)
@@ -23,7 +23,9 @@ if(NOT CMAKE_INSTALL_INCLUDEDIR)
 endif()
 
 add_library("${PROJECT_NAME}"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/conf.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dump.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/exception.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/load.cpp"
 )
 
 set_target_properties("${PROJECT_NAME}"

@@ -56,11 +56,12 @@ parents[] = {
         }
     ]
 }
+# json
 parents[] = {
-    name = toto
-    age = 0x2A
-    gender = M
-    childs = []
+    "name": "toto",
+    "age": 0x2A,
+    "gender": "M",
+    "childs": []
 }
 ; pseudo json one line
 parents[] = { name = clara, age = 42, gender = F, childs = [], emptyObj = {} }
@@ -216,14 +217,21 @@ std::cout << blet::conf::dump(conf, 2, ' ', blet::conf::JSON_STYLE) << std::endl
 
 ## Build
 ```bash
-# static build
-mkdir build ; pushd build && cmake .. && make -j ; popd
-# shared build
-mkdir build ; pushd build && cmake -DBUILD_SHARED_LIBS=1 .. && make -j ; popd
-# static build and launch test
-mkdir build ; pushd build && cmake -DBUILD_TESTING=1 .. && make -j && make test ; popd
-# shared build and launch test
-mkdir build ; pushd build && cmake -DBUILD_SHARED_LIBS=1 -DBUILD_TESTING=1 .. && make -j && make test ; popd
+# Static Release
+mkdir build; pushd build; cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=0 .. && make -j && make install; popd
+# Dynamic Release
+mkdir build; pushd build; cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=1 .. && make -j && make install; popd
+
+# Static Release C++98
+mkdir build; pushd build; cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_STANDARD=98 -DBUILD_SHARED_LIBS=0 .. && make -j && make install; popd
+# Dynamic Release C++98
+mkdir build; pushd build; cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_STANDARD=98 -DBUILD_SHARED_LIBS=1 .. && make -j && make install; popd
+
+# Install with custom directory
+mkdir build; pushd build; cmake -DCMAKE_INSTALL_PREFIX="YOUR_INSTALL_PATH" .. && make -j && make install; popd
+
+# Example + Tests + Coverage
+mkdir build; pushd build; cmake -DCMAKE_BUILD_TYPE=Debug -DBUILD_EXAMPLE=1 -DBUILD_TESTING=1 -DBUILD_COVERAGE=1 -DCMAKE_CXX_STANDARD=98 .. && make -j && make test -j; popd
 ```
 
 ## Load Functions

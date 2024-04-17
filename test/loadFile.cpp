@@ -16,7 +16,7 @@ GTEST_TEST(loadFile, except_open_file) {
                 blet::Dict conf = blet::conf::loadFile(testFile);
             }
             catch (const blet::conf::LoadException& e) {
-                EXPECT_STREQ(e.what(), "Parse /tmp/blet_test_loadFile_except_open_file.conf: (Open file failed)");
+                EXPECT_STREQ(e.what(), "Load /tmp/blet_test_loadFile_except_open_file.conf: (Open file failed)");
                 EXPECT_EQ(e.message(), "Open file failed");
                 EXPECT_EQ(e.filename(), "/tmp/blet_test_loadFile_except_open_file.conf");
                 EXPECT_EQ(e.line(), 0);
@@ -46,7 +46,7 @@ GTEST_TEST(loadFile, except_parsing) {
                 blet::Dict conf = blet::conf::loadFile(testFile);
             }
             catch (const blet::conf::LoadException& e) {
-                EXPECT_STREQ(e.what(), "Parse at /tmp/blet_test_loadFile_except_parsing.conf:2:1 (Key not found)");
+                EXPECT_STREQ(e.what(), "Load at /tmp/blet_test_loadFile_except_parsing.conf:2:1 (Key not found)");
                 EXPECT_EQ(e.message(), "Key not found");
                 EXPECT_EQ(e.filename(), "/tmp/blet_test_loadFile_except_parsing.conf");
                 EXPECT_EQ(e.line(), 2);
@@ -55,4 +55,21 @@ GTEST_TEST(loadFile, except_parsing) {
             }
         },
         blet::conf::LoadException);
+}
+
+GTEST_TEST(loadFile, valid) {
+    // clang-format off
+    std::string confStr = ""
+        "[section]\n"
+        "test=42";
+    // clang-format on
+
+    // create example file
+    const char* testFile = "/tmp/blet_test_loadFile_valid.conf";
+    test::blet::FileGuard fileGuard(testFile, std::ofstream::out | std::ofstream::trunc);
+    fileGuard << confStr << std::flush;
+    fileGuard.close();
+
+    blet::Dict conf = blet::conf::loadFile(testFile);
+    EXPECT_EQ(conf["section"]["test"], 42);
 }

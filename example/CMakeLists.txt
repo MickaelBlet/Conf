@@ -20,5 +20,5 @@ foreach(file ${example_files})
             NO_SYSTEM_FROM_IMPORTED ON
             COMPILE_FLAGS "-pedantic -Wall -Wextra -Werror"
     )
-    target_link_libraries("${filenamewe}.${library_project_name}.example" PUBLIC "${library_project_name}_single_include")
+    target_link_libraries("${filenamewe}.${library_project_name}.example" PUBLIC "${library_project_name}")
 endforeach()

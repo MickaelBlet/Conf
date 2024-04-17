@@ -37,13 +37,13 @@ namespace blet {
 namespace conf {
 
 /**
- * @brief Parse exception from std::exception
+ * @brief Load exception from std::exception
  */
 class LoadException : public std::exception {
   public:
     LoadException(const std::string& filename, const std::string& message);
     LoadException(const std::string& filename, std::size_t line, std::size_t column, const std::string& message);
-    virtual ~LoadException() throw();
+    ~LoadException() throw();
     const char* what() const throw();
     const std::string& filename() const throw();
     const std::string& message() const throw();
@@ -88,7 +88,7 @@ std::string dump(const blet::Dict& dict, std::size_t indent = 0, char indentChar
                  enum EDumpStyle style = CONF_STYLE);
 
 /**
- * @brief Parse and load a config from filename.
+ * @brief Load a config from filename.
  *
  * @param filename A filename.
  * @return blet::Dict Dictionnary of config.
@@ -96,7 +96,7 @@ std::string dump(const blet::Dict& dict, std::size_t indent = 0, char indentChar
 blet::Dict loadFile(const char* filename);
 
 /**
- * @brief Parse and load a config from stream.
+ * @brief Load a config from stream.
  *
  * @param stream A stream.
  * @return blet::Dict Dictionnary of config.
@@ -104,7 +104,7 @@ blet::Dict loadFile(const char* filename);
 blet::Dict loadStream(std::istream& stream);
 
 /**
- * @brief Parse and load a config from string.
+ * @brief Load a config from string.
  *
  * @param str A string.
  * @return blet::Dict Dictionnary of config.
@@ -112,7 +112,7 @@ blet::Dict loadStream(std::istream& stream);
 blet::Dict loadString(const std::string& str);
 
 /**
- * @brief Parse and load a config from data.
+ * @brief Load a config from data.
  *
  * @param data A data.
  * @param size Size of data.

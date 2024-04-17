@@ -122,6 +122,48 @@ std::cout << conf["test"]["42 space  "]["key[]"] << std::endl;
 //  value space
 ```
 
+## Json
+
+```conf
+$ cat ./test6.conf
+# comment
+{
+    "test": {
+        "key": 42, # comment line
+        "42": "value"
+    }
+}
+```
+```cpp
+blet::Dict conf = blet::conf::loadFile("./test6.conf");
+std::cout << conf["test"]["key"] << std::endl;
+std::cout << conf["test"]["42"] << std::endl;
+// output:
+// 42
+// value
+```
+
+## Pseudo Json
+
+```conf
+$ cat ./test7.conf
+# comment
+{
+    test = {
+        key = 42 # comment line
+        42 = "value"
+    }
+}
+```
+```cpp
+blet::Dict conf = blet::conf::loadFile("./test7.conf");
+std::cout << conf["test"]["key"] << std::endl;
+std::cout << conf["test"]["42"] << std::endl;
+// output:
+// 42
+// value
+```
+
 ## loadFile
 
 ```conf

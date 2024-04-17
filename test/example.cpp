@@ -102,6 +102,8 @@ GTEST_TEST(configator, test5) {
 
     blet::Dict conf = blet::conf::loadString(strConf);
 
+    std::cout << blet::conf::dump(conf, 2, ' ', blet::conf::JSON_STYLE) << std::endl;
+
     EXPECT_EQ(conf["test"]["32[\\]"].getString(), "\"2 ;\"#'## i\\");
     EXPECT_EQ(conf["test"]["42"]["key[]"].getString(), "value");
     EXPECT_EQ(conf["test"]["42 space  "]["key[]"].getString(), " value space ");

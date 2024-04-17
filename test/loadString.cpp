@@ -24,6 +24,28 @@ GTEST_TEST(loadString, backSlash) {
     EXPECT_EQ(conf["test"]["test\\\"test"], 42);
 }
 
+GTEST_TEST(loadString, keyOfMap) {
+    // clang-format off
+    const char confStr[] = ""
+        "[test]\n"
+        "test [ test ] = 42";
+    // clang-format on
+
+    const blet::Dict conf = blet::conf::loadString(confStr);
+    EXPECT_EQ(conf["test"]["test"]["test"], 42);
+}
+
+GTEST_TEST(loadString, keyOfMultiMap) {
+    // clang-format off
+    const char confStr[] = ""
+        "[test]\n"
+        "test [ test ][ test ] = 42";
+    // clang-format on
+
+    const blet::Dict conf = blet::conf::loadString(confStr);
+    EXPECT_EQ(conf["test"]["test"]["test"]["test"], 42);
+}
+
 GTEST_TEST(loadString, quoteInKeyOfMap) {
     // clang-format off
     const char confStr[] = ""
@@ -52,6 +74,25 @@ GTEST_TEST(loadString, empty) {
         blet::Dict conf = blet::conf::loadString("\n");
         EXPECT_TRUE(conf.isNull());
     }
+}
+
+GTEST_TEST(loadString, nullValue) {
+    // clang-format off
+    const char confStr[] = ""
+        "[test]\n"
+        "test1 = \n"
+        "test2 = Null\n"
+        "test3 = null\n"
+        "test4 = None\n"
+        "test5 = none";
+    // clang-format on
+
+    const blet::Dict conf = blet::conf::loadString(confStr);
+    EXPECT_TRUE(conf["test"]["test1"].isNull());
+    EXPECT_TRUE(conf["test"]["test2"].isNull());
+    EXPECT_TRUE(conf["test"]["test3"].isNull());
+    EXPECT_TRUE(conf["test"]["test4"].isNull());
+    EXPECT_TRUE(conf["test"]["test5"].isNull());
 }
 
 GTEST_TEST(loadString, nullObject) {
@@ -98,12 +139,14 @@ GTEST_TEST(loadString, multiSectionSubLevel) {
         "test = 42\n"
         "[[[test2]]]\n"
         "[[[[test3]]]]\n"
+        "test = 42\n"
         "[[test4]]\n"
         "test = 42";
     // clang-format on
 
     const blet::Dict conf = blet::conf::loadString(confStr);
     EXPECT_EQ(conf["test"]["test"]["test"], 42);
+    EXPECT_EQ(conf["test"]["test"]["test2"]["test3"]["test"], 42);
     EXPECT_EQ(conf["test"]["test4"]["test"], 42);
 }
 
@@ -348,4 +391,39 @@ GTEST_TEST(loadString, parseReplaceEscapeChar) {
 
     const blet::Dict conf = blet::conf::loadString(confStr);
     EXPECT_EQ(conf["test"]["1"], "\a\b\f\n\r\t\v\'\"\\");
+}
+
+GTEST_TEST(loadString, parseJson) {
+    // clang-format off
+    const char confStr[] = ""
+        "{\n"
+        "  \"test\": 42\n"
+        "}\n";
+    // clang-format on
+
+    const blet::Dict conf = blet::conf::loadString(confStr);
+    EXPECT_EQ(conf["test"], 42);
+}
+
+GTEST_TEST(loadString, parseJsonOneLine) {
+    // clang-format off
+    const char confStr[] = "{\"test1\":42,\"test2\":true}";
+    // clang-format on
+
+    const blet::Dict conf = blet::conf::loadString(confStr);
+    EXPECT_EQ(conf["test1"], 42);
+    EXPECT_EQ(conf["test2"], true);
+}
+
+GTEST_TEST(loadString, parseJsonWithSection) {
+    // clang-format off
+    const char confStr[] = ""
+        "[test]"
+        "{\n"
+        "  \"test\": 42\n"
+        "}\n";
+    // clang-format on
+
+    const blet::Dict conf = blet::conf::loadString(confStr);
+    EXPECT_EQ(conf["test"]["test"], 42);
 }
